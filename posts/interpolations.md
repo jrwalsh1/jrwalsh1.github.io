@@ -15,11 +15,13 @@ It's useful to distinguish interpolation from regression -- interpolation provid
 
 Here's a case where I use interpolation in my own work.  Let's say I have a smooth function $f(x)$ which I want to evaluate over some compact interval.  Suppose $ f(x) \equiv \int_a^b dy \, g(x, y) $, where $ g(x, y) $ is a very complex function and the integral can only be done numerically.  If I want to avoid doing this integral every time I evaluate $ f $, I can tabulate the function over a large number of points (once and for all) and interpolate them to get any $ f(x) $.  I can evaluate the numerical error from interpolation, and ensure that this error falls below the accuracy I need.
 
-I'll talk about two types of interpolation of 1-D functions: the standard cubic spline and the less-known Steffen interpolation.  Both use cubic polynomials to interpolate between data points, where the polynomial coefficients are determined by boundary conditions at the data points.  The Steffen interpolation (M. Steffen, Astron. Astrophys. 239, 443-450 (1990)) has the nice feature that it is monotonic between data points, which avoids wild excursions of the interpolation that can happen with other methods.  Many other types of interpolation exist, and frameworks such as gsl or scipy have rather broad implementations of interpolation routines (with 2D interpolations in scipy or available as an extension in gsl).  I use 2D cubic (or bicubic) interpolation a lot in my own work.
+I'll talk about two types of interpolation of 1-D functions: the standard cubic spline and the less-known Steffen interpolation.  Both use cubic polynomials to interpolate between data points, where the polynomial coefficients are determined by boundary conditions at the data points.  The [Steffen interpolation](http://adsabs.harvard.edu/full/1990A%26A...239..443S "M. Steffen, Astron. Astrophys. 239, 443-450 (1990)") has the nice feature that it is monotonic between data points, which avoids wild excursions of the interpolation that can happen with other methods.  Many other types of interpolation exist, and frameworks such as gsl or scipy have rather broad implementations of interpolation routines (with 2D interpolations in scipy or available as an extension in gsl).  I use 2D cubic (or bicubic) interpolation a lot in my own work.
 
 Suppose we have a set of points $\{(x_0 , y_0) ,\, \ldots ,\, (x_n, y_n) \}$ to interpolate.  We define a set of cubic polynomials $\{ g_0 (x), \, \ldots ,\, g_{n-1} (x) \}$, where
 
-$g_k (x) = c_k^{(0)} + c_k^{(1)} (x - x_k) + c_k^{(2)} (x - x_k)^2 + c_k^{(3)} (x - x_k)^3 \;$ covers the domain $[x_k, x_{k+1}]$.
+$$
+g_k (x) = c_k^{(0)} + c_k^{(1)} (x - x_k) + c_k^{(2)} (x - x_k)^2 + c_k^{(3)} (x - x_k)^3 \text{ covers the domain } [x_k, x_{k+1}].
+$$
 
 There are $4n$ coefficients to determine.  These can be expressed in terms of the values ($y_k$) and derivatives ($y_k'$) at each of the data points via the linear system
 
@@ -47,13 +49,17 @@ Enforcing that the interpolation passes through the data points (and hence requi
 
 At this point, different interpolation schemes make different choices to fix the remaining variables.  Let's talk about these in turn, starting with the usual cubic spline.
 
-#Cubic spline
+# <span style="color:blue">Cubic spline</span>
 
 The standard cubic spline makes an obvious choice: enforcing the interpolation is $C_2$, plus boundary conditions at the endpoint:
-continuity of the second derivative ($g_k'' (x_{k+1}) = g_{k+1}'' (x_{k+1})$). [$n - 1$ conditions]
-vanishing second derivative at the boundary, ($g_0''(x_0) = 0$, $g_{n-1}''(x_n) = 0$) [2 conditions]
+
+* Continuity of the second derivative: $g_k'' (x_{k+1}) = g_{k+1}'' (x_{k+1})$. <span style="color:red">[$n - 1$ conditions]</span>
+* Vanishing second derivative at the boundary: $g_0''(x_0) = 0$, $g_{n-1}''(x_n) = 0$ <span style="color:red">[2 conditions]</span>
+
 The endpoint boundary conditions could be chosen differently, and it's useful to consider the case where we ask that the first derivatives vanish instead of the second:
-vanishing first derivative at the boundary, ($g_0'(x_0) = 0$, $g_{n-1}'(x_n) = 0$) [2 conditions]
+
+* Vanishing first derivative at the boundary, ($g_0'(x_0) = 0$, $g_{n-1}'(x_n) = 0$) <span style="color:red">[2 conditions]</span>
+
 The second derivatives are
 
 $$
@@ -65,12 +71,18 @@ $$
 
 so that continuity implies
 
-$g_k'' (x_{k+1}) = g_{k+1}'' (x_{k+1}) \; \Rightarrow \; d_{k+1} y_k' + 2(d_k + d_{k+1}) y_{k+1}' + d_k y_{k+2}' = 3(d_k m_{k+1} + d_{k+1} m_k) ,$
+$$
+g_k'' (x_{k+1}) = g_{k+1}'' (x_{k+1}) \; \Rightarrow \; d_{k+1} y_k' + 2(d_k + d_{k+1}) y_{k+1}' + d_k y_{k+2}' = 3(d_k m_{k+1} + d_{k+1} m_k) ,
+$$
 
 while a vanishing second derivative at the endpoint gives the conditions
 
-$g_0'' (x_0) = 0 \; \Rightarrow \; 2 y_0' + y_1' = 3 m_0 ,$
-$g_{n-1}'' (x_n) = 0 \; \Rightarrow \; 2 y_n' + y_{n-1}' = 3 m_{n-1} .$
+$$
+\begin{align}
+g_0'' (x_0) &= 0 \; \Rightarrow \; 2 y_0' + y_1' = 3 m_0 , \\\
+g_{n-1}'' (x_n) &= 0 \; \Rightarrow \; 2 y_n' + y_{n-1}' = 3 m_{n-1} .
+\end{align}
+$$
 
 This leads to a linear system which can be represented as
 
@@ -164,9 +176,9 @@ $$
 
 which is also tridiagonal.  At this point, we only need to invert the matrix to solve for the derivatives and calculate the function.  It may be surprising, but the derivatives will generally depend on the values of all of the data points -- so your interpolation can be adversely affected by including garbage data at the ends of the domain.  Before moving on to the Steffen interpolation I'll talk about inverting the tridiagonal matrices here, which is interesting on its own.
 
-# Inverting tridiagonal matrices
+# <span style="color:blue">Inverting tridiagonal matrices </span>
 
-Guess what? Inverting tridiagonal matrices is a lot of fun!  There's a pretty slick form for the inverse, that runs into some interesting sequences (I believe the proper reference is [R. Usmani, Comput. Math. Appl. 212/213, 413-414 (1994)]).
+Guess what? Inverting tridiagonal matrices is a lot of fun!  There's a pretty slick form for the inverse that runs into some interesting sequences (see [this paper](http://www.sciencedirect.com/science/article/pii/0024379594904146 "R. Usmani, Comput. Math. Appl. 212/213, 413-414 (1994)")).
 
 For a tridiagonal matrix of the form
 
@@ -216,7 +228,7 @@ $$
 
 This further simplifies if the $a_k$ are constant; in this case the recurrence relation becomes a Lucas sequence $U(a_k, 1)$ (as in the case of the modified cubic spline, where $a_k = 4$).  Let's take another side track and prove a nice identity for the Lucas sequence $U(P, 1)$ that seems to be not well known.
 
-The Lucas sequence $U(P, 1)$:
+### <span style="color:blue">The Lucas sequence $U(P, 1)$</span>
 
 We're discussing a special case of the Lucas sequence $U(P, Q)$, setting $Q = 1$.  Let's use the notation $U_n$ as the $n^{\rm th}$ term of $U(P, 1)$.  The closed form expression for $U_n$ is given by
 
@@ -226,14 +238,18 @@ $$
 
 We will show $U_n^2 = U_{n+k} U_{n-k} + U_k^2$ for any natural numbers $n$ and $k$.  We will make use of the defining recursion relation for $U_n:$
 
-$U_n = P U_{n-1} - U_{n-2},$ where $U_1 = 1$ and $U_2 = P.$
+$$
+U_n = P U_{n-1} - U_{n-2}, \text{ where } U_1 = 1 \text{ and } U_2 = P.
+$$
 
 First, we need to prove another relation, $U_{n+k} = U_n U_{k+1} - U_{n-1} U_k,$ which we do by induction on $k$.  For $k = 1$, we recover the defining recursion relation above.  Assuming the case for $k$, for $k+1$ we have
 
 $$
 \begin{align}
-U_{n+k+1} &= P U_{n+k} - U_{n+k-1} = P ( U_n U_{k+1} - U_{n-1} U_k ) - U_n U_k + U_{n-1} U_{k-1} \\\
-&= U_n ( P U_{k+1} - U_k ) - U_{n-1} ( P U_k - U_{k-1} ) = U_n U_{k+2} - U_{n-1} U_{k+1},
+U_{n+k+1} &= P U_{n+k} - U_{n+k-1} \\\
+&= P ( U_n U_{k+1} - U_{n-1} U_k ) - U_n U_k + U_{n-1} U_{k-1} \\\
+&= U_n ( P U_{k+1} - U_k ) - U_{n-1} ( P U_k - U_{k-1} ) \\\
+&= U_n U_{k+2} - U_{n-1} U_{k+1},
 \end{align}
 $$ 
 
@@ -246,11 +262,7 @@ U_{n+k}^2 - U_{n+2k} U_n &= (U_n U_{k+1} - U_{n-1} U_k)^2 - (U_n U_{2k+1} - U_{n
 \end{align}
 $$
 
-Using $U_{k+1} + U_{k-1} = P U_k,$ (which uses $Q = 1$ for the general Lucas sequence relation) we can put the above into the form
-
-$ = U_k^2 ( U_n^2 - U_{n-1} U_{n+1} )$,
-
-so that if $U_n^2 - U_{n-1} U_{n+1} = 1$, we have proven the relation we set out to (note that we have just shifted the indices by $k$).  This can be done using $U_n$ in terms of $a$ and $b$, noting two things: $a b = \frac14 (P^2 - D) = 1,$ and $a - b = \sqrt{D}.$  Then
+Using $U_{k+1} + U_{k-1} = P U_k,$ (which uses $Q = 1$ for the general Lucas sequence relation) we can put the above into the form $U_k^2 ( U_n^2 - U_{n-1} U_{n+1} ),$ so that if $U_n^2 - U_{n-1} U_{n+1} = 1$, we have proven the relation we set out to (note that we have just shifted the indices by $k$).  This can be done using $U_n$ in terms of $a$ and $b$, noting two things: $a b = \frac14 (P^2 - D) = 1,$ and $a - b = \sqrt{D}.$  Then
 
 $$
 \begin{align}
@@ -259,11 +271,11 @@ U_n^2 - U_{n-1} U_{n+1} &= \frac{1}{D} \Bigl( (a^n - b^n)^2 - (a^{n-1} - b^{n-1}
 \end{align}
 $$
 
-and therefore we have $U_n^2 = U_{n+k} U_{n-k} + U_k^2$!  For the Fibonacci sequence, a very similar relation holds and is called Catalan's identity; this extension holds for the general Lucas sequence $U(P, 1)$, although it's not widely known.
+and therefore we have $U_n^2 = U_{n+k} U_{n-k} + U_k^2$!  For the Fibonacci sequence, a very similar relation holds and is called Catalan's identity; we've shown the extension to the general Lucas sequence $U(P, 1)$.
 
 OK, that was an interesting diversion.  Now let's talk about the Steffen interpolation, which doesn't have any matrices to invert!
 
-# Steffen interpolation:
+# <span style="color:blue">Steffen interpolation</span>
 
 The Steffen interpolation was motivated by the fact that many interpolation routines can have undesirable behavior between data points.  One way to think about this (for the case of the cubic spline) is that it "uses up" its degrees of freedom by requiring the interpolation is $C_2$, and so there are no more degrees of freedom left to ensure that the function is at all well-behaved between the data points -- we are just relying on the smoothness of the cubic polynomials to not do anything too crazy.
 The Steffen interpolation solves this problem by using the remaining degrees of freedom to ensure that for each segment (cubic function between adjacent data points), the interpolation is monotonic.  It sets the derivatives to values depending on the data in the neighborhood:
