@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html prefix="
+og: http://ogp.me/ns#
+article: http://ogp.me/ns/article#
+" lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Symmetry Factors of Graphs | Math and Data</title>
+<link href="../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+<link rel="alternate" type="application/rss+xml" title="RSS" href="../../rss.xml">
+<link rel="canonical" href="http://jrwalsh1.github.io/posts/symmetry-factors-of-graphs/">
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+    },
+    displayAlign: 'center', // Change this to 'center' to center equations.
+    "HTML-CSS": {
+        styles: {'.MathJax_Display': {"margin": 0}},
+        linebreaks: { automatic: true }
+    }
+});
+</script><!--[if lt IE 9]><script src="../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Jon Walsh">
+<meta property="og:site_name" content="Math and Data">
+<meta property="og:title" content="Symmetry Factors of Graphs">
+<meta property="og:url" content="http://jrwalsh1.github.io/posts/symmetry-factors-of-graphs/">
+<meta property="og:description" content="Particle physicists like to represent things with diagrams.  The popular example is Feynman diagrams, and there are rules to draw and evaluate diagrams for different scattering processes.  Diagrams al">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2015-08-11T22:07:14-07:00">
+<meta property="article:tag" content="combinatorics">
+<meta property="article:tag" content="graphs">
+<meta property="article:tag" content="mathjax">
+<meta property="article:tag" content="python">
+</head>
+<body>
+<a href="#content" class="sr-only sr-only-focusable">Skip to main content</a>
+
+<!-- Menubar -->
+
+<div class="container">
+    <div class="page-header">
+        <ul class="nav nav-pills pull-right">
+<li>
+    <a href="index.md" id="sourcelink">Source</a>
+    </li>
+            
+        </ul>
+<a href="http://jrwalsh1.github.io/">
+            <h2 class="text-muted">
+                <span id="blog-title"><strong>Math and Data</strong></span>
+            </h2>
+        </a>
+    </div> <!-- ./page-header -->
+</div> <!-- ./container -->
+
+<!-- End of Menubar -->
+
+<div class="container" id="content" role="main">
+    <div class="row">
+        <div class="col-sm-3 col-md-2">
+            <ul class="nav nav-pills nav-stacked">
+<li>
+<a href="../../about/index.html">About</a>
+                </li>
+<li>
+<a href="../../categories/">Tags</a>
+                </li>
+<li>
+<a href="../../rss.xml">RSS feed</a>
+
+                
+            </li>
+</ul>
+</div> <!-- ./col -->
+        <div class="col-sm-9 col-md-10">
+            <div class="body-content">
+                <!--Body content-->
+                <div class="row">
+                    
+<article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title" itemprop="headline name"><a href="." class="u-url">Symmetry Factors of Graphs</a></h1>
+
+        <div class="metadata">
+            <p class="byline author vcard"><span class="byline-name fn">Jon Walsh</span></p>
+            <p class="dateline"><a href="." rel="bookmark"><time class="published dt-published" datetime="2015-08-11T22:07:14-07:00" itemprop="datePublished" title="2015-08-11 22:07">2015-08-11 22:07</time></a></p>
+                <p class="commentline">            <a href=".#disqus_thread" data-disqus-identifier="cache/posts/symmetry-factors-of-graphs.html">Comments</a>
+
+
+                    </p>
+<p class="sourceline"><a href="index.md" id="sourcelink">Source</a></p>
+
+        </div>
+        
+    </header><div class="e-content entry-content" itemprop="articleBody text">
+    <div>
+<p>Particle physicists like to represent things with diagrams.  The popular example is Feynman diagrams, and there are rules to draw and evaluate diagrams for different scattering processes.  Diagrams also arise in the large scale structure of cosmology, where matter fluctuations can be described using perturbation theory (see this <a href="https://en.wikipedia.org/wiki/Cosmological_perturbation_theory" title="Cosmological perturbation theory">Wikipedia article</a>).</p>
+<p>Diagrams for cosmological perturbation theory (specifically large scale structure): they are basically functions of directed graphs.  That is:</p>
+<ul>
+<li>The value of the diagram is the product of weights of edges and vertices.</li>
+<li>Each edge in the diagram is associated with a momentum flow, which enters through the vertices.</li>
+<li>The weight of and edge is a scalar function of the momentum flow in the edge.</li>
+<li>The weight of a vertex is a scalar function of the momentum flow in the edges connecting to the vertex.</li>
+</ul>
+<p>These diagrams have two types of symmetry factors:</p>
+<ul>
+<li>The internal symmetry factor $-$ the number of topologically-invariant permutations of the edges of the graph.</li>
+<li>The external symmetry factor $-$ if the vertices are labeled, the number of permutations of vertices that produce topologically distinct graphs.</li>
+</ul>
+<!-- TEASER_END --><h2><span style="color:blue">The Internal Symmetry Factor</span></h2>
+<p>The internal symmetry factor simply counts the number of ways we can connect the edges from each vertex together to form a given topology.  Here's an example: suppose we have a graph we'll call $D_{321}$, with the topology ${ v_1 \textbf{ - } v_1 ,\, v_1 \textbf{ - } v_2 ,\, v_2 \textbf{ - } v_3 },$ where vertices are denoted $v_{1 - 3}.$ There are 6 configurations of edge connections that give the same topology:</p>
+<p><br></p>
+<div style="text-align: center;"><img src="../../images/InternalSymmetryFactor.png" alt="Internal symmetry factor for D_321" align="middle" width="400"></div>
+<br><p>So the internal symmetry factor is $S(D_{321}) = 6.$  What is the symmetry factor for a general graph $D$ with $k$ vertices?  Let's derive a formula.</p>
+<p>There are two relevant quantities for a general graph:</p>
+<p>$$
+\begin{align}
+n_i &amp;: \text{ the number of edges connecting to vertex } i. \\
+n_{ij} &amp;: \text{ the number of edges connecting vertex } i \text{ to vertex } j.
+\end{align}
+$$</p>
+<p>Note $\sum_j n_{ij} = n_i$.  First, let's take a simpler case first: $n_{ii} = 0$ for all $i$.  For each vertex, let's define the multinomial coefficient</p>
+<p>$$
+M_i \equiv \dfrac{n_i!}{\prod_j n_{ij}!} \,,
+$$</p>
+<p>which counts how many ways we can divide up the $n_i$ edges connecting to vertex $i$ into groups that go to each of the vertices.  This tells us the symmetry factor contribution for each vertex, and now we need to multiply by the number of ways $C_{ij}$ to connect the set of edges running between each pair of vertices.  But this is easy:</p>
+<p>$$
+C_{ij} = n_{ij}!
+$$</p>
+<p>So the symmetry factor for graphs with $n_{ii} = 0$ is:</p>
+<p>$$
+S(D[n_{ii} = 0]) = \Bigl(\prod_{i = 1}^k M_i \Bigr) \Bigl( \prod_{i = 1}^k \prod_{j = 1}^{i-1} C_{ij} \Bigr) \,.
+$$</p>
+<p>Now let's handle the case where there can be "tadpole" loops at a single vertex.  Clearly the multinomial factor $M_i$ is still the same, since the vertices don't know where the edges are going.  But now we need to include a term for $C_{ii}$, the number of way to connect $n_{ii}$ edges from a vertex to itself.</p>
+<p>The edges from a vertex to itself are connected in pairs, so $C_{ii}$ is the number of ways to group $n_{ii}$ labeled objects into pairs.  You may recognize this counting problem as giving a double factorial (it is equivalent to a perfect matching of a complete graph of $n_{ii}$ vertices, or countings of various types of binary trees).  More explicitly, taking the first few cases of $n_{ii} = 2, 4, 6$ ($n_{ii}$ must be even), we get $C_{ii} = 1, 3, 15,$ and it's not hard to see</p>
+<p>$$
+C_{ii} = (n_{ii} - 1)!!
+$$</p>
+<p>One can go through a more explicit combinatorial counting and see that</p>
+<p>$$
+C_{ii} = \frac{n_{ii}!}{(2!)^{n_{ii} / 2} (\frac12 n_{ii})!} = (n_{ii} - 1)!!
+$$</p>
+<p>Therefore the internal symmetry factor for any graph is</p>
+<p>$$
+\boxed{ S(D) = \Bigl(\prod_{i = 1}^k M_i \Bigr) \Bigl( \prod_{i = 1}^k \prod_{j = 1}^{i} C_{ij} \Bigr) \,, }
+$$</p>
+<p>where</p>
+<p>$$
+\boxed{ \begin{align}
+M_i = \frac{n_i!}{\prod_j n_{ij}!} \,, \ C_{ij} =
+\begin{cases}
+n_{ij}! &amp; i \neq j \\
+(n_{ii} - 1)!! &amp; i = j \,.
+\end{cases}
+\end{align} }
+$$</p>
+<p>If we apply this formula to the figure above, we have $M_1 = 3 ,\, M_2 = 2 ,\, M_3 = 1,\,$ and $C_{ij} = 1$ for all $i,\, j$, so that $S = 6$ as we the figure explicitly computed.</p>
+<h2><span style="color:blue">The External Symmetry Factor</span></h2>
+<p>The external symmetry factor counts how we may permute the vertex labels on the graph to produce a topologically distinct graph (think of the vertex labels as colors).  For example, for a graph $D_{332}$, with the topology ${ v_1 \textbf{ - } v_2 ,\, v_1 \textbf{ - } v_2 ,\, v_1 \textbf{ - } v_3 ,\, v_2 \textbf{ - } v_3 },$ there are 3 distinct topologies, each having two equivalent vertex labelings:</p>
+<p><br></p>
+<div style="text-align: center;"><img src="../../images/ExternalSymmetryFactor.png" alt="External symmetry factor for D_332" align="middle" width="400"></div>
+<br><p>So the external symmetry factor $E(D_{332}) = 3$.  This factor can be computed by using the adjacency matrix $A$, which encodes the $n_{ij}$:</p>
+<p>$$
+A_{ i j } = n_{ i j } \,.
+$$</p>
+<p>The adjacency matrix for $D_{332}$ is distinct for the different rows of the figure:</p>
+<p>$$
+\left( \begin{matrix}
+0 &amp; 2 &amp; 1 \\
+2 &amp; 0 &amp; 1 \\
+1 &amp; 1 &amp; 0
+\end{matrix} \right) \,, \;\; \left( \begin{matrix}
+0 &amp; 1 &amp; 2 \\
+1 &amp; 0 &amp; 1 \\
+2 &amp; 1 &amp; 0
+\end{matrix} \right) \,, \;\; \left( \begin{matrix}
+0 &amp; 1 &amp; 1 \\
+1 &amp; 0 &amp; 2 \\
+1 &amp; 2 &amp; 0
+\end{matrix} \right) \,.
+$$</p>
+<p>Therefore, the external symmetry factor is:</p>
+<p>$$
+\boxed{E(D) = \text{the number of unique adjacency matrices under permutation of the vertex labels.}}
+$$</p>
+<p>There doesn't seem to be a simple formula for this, as it depends on the symmetry group of the graph, but one can straightforwardly calculate $E(D)$ using the adjacency matrix in code.</p>
+<p>Great! Now we know how to compute various symmetry factors of graphs, and they use fun features of combinatorics.</p>
+</div>
+    </div>
+    <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
+<li><a class="tag p-category" href="../../categories/combinatorics/" rel="tag">combinatorics</a></li>
+            <li><a class="tag p-category" href="../../categories/graphs/" rel="tag">graphs</a></li>
+            <li><a class="tag p-category" href="../../categories/python/" rel="tag">python</a></li>
+        </ul>
+<ul class="pager hidden-print">
+<li class="previous">
+                <a href="../interpolations/" rel="prev" title="Interpolations">Previous post</a>
+            </li>
+            <li class="next">
+                <a href="../measuring-wind-speeds-from-flights/" rel="next" title="Measuring Wind Speeds from Flights">Next post</a>
+            </li>
+        </ul></nav></aside><section class="comments"><h2>Comments</h2>
+                        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="mathanddata",
+            disqus_url="http://jrwalsh1.github.io/posts/symmetry-factors-of-graphs/",
+        disqus_title="Symmetry Factors of Graphs",
+        disqus_identifier="cache/posts/symmetry-factors-of-graphs.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script><noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a>
+</noscript>
+    <a href="//disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+        </section></article><script>var disqus_shortname="mathanddata";(function(){var a=document.createElement("script");a.async=true;a.src="//"+disqus_shortname+".disqus.com/count.js";(document.getElementsByTagName("head")[0]||document.getElementsByTagName("body")[0]).appendChild(a)}());</script>
+</div>
+                <!--End of body content-->
+            </div>
+        </div> <!-- ./col -->
+    </div> <!-- ./row -->
+</div> <!-- ./container -->
+
+<footer class="footer"><div class="container">
+        <p class="text-muted">
+            Contents © 2015         <a href="mailto:jrwalsh1@gmail.com">Jon Walsh</a> - Powered by         <a href="https://getnikola.com" rel="nofollow">Nikola</a>         <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"></a><br>This work by <a xmlns:cc="http://creativecommons.org/ns#" href="http://jrwalsh1.github.io" property="cc:attributionName" rel="cc:attributionURL">Jon Walsh</a> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+            
+        </p>
+    </div>
+</footer><script src="../../assets/js/all-nocdn.js"></script><script>$('a.image-reference:not(.islink) img:not(.islink)').parent().colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script><!-- fancy dates --><script>
+    moment.locale("");
+    fancydates(0, "YYYY-MM-DD HH:mm");
+    </script><!-- end fancy dates -->
+</body>
+</html>

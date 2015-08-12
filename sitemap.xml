@@ -19,23 +19,55 @@
  </url>
  <url>
   <loc>http://jrwalsh1.github.io/archive.html</loc>
-  <lastmod>2015-08-12T04:03:00Z</lastmod>
+  <lastmod>2015-08-12T18:19:00Z</lastmod>
  </url>
  <url>
   <loc>http://jrwalsh1.github.io/categories/</loc>
-  <lastmod>2015-08-11T21:40:00Z</lastmod>
+  <lastmod>2015-08-12T17:38:00Z</lastmod>
+ </url>
+ <url>
+  <loc>http://jrwalsh1.github.io/categories/combinatorics/</loc>
+  <lastmod>2015-08-12T05:22:00Z</lastmod>
+ </url>
+ <url>
+  <loc>http://jrwalsh1.github.io/categories/data-science/</loc>
+  <lastmod>2015-08-12T17:38:00Z</lastmod>
+ </url>
+ <url>
+  <loc>http://jrwalsh1.github.io/categories/flights/</loc>
+  <lastmod>2015-08-12T17:38:00Z</lastmod>
  </url>
  <url>
   <loc>http://jrwalsh1.github.io/categories/functions/</loc>
   <lastmod>2015-08-11T20:51:00Z</lastmod>
  </url>
  <url>
+  <loc>http://jrwalsh1.github.io/categories/graphs/</loc>
+  <lastmod>2015-08-12T05:22:00Z</lastmod>
+ </url>
+ <url>
   <loc>http://jrwalsh1.github.io/categories/interpolation/</loc>
   <lastmod>2015-08-11T20:51:00Z</lastmod>
  </url>
  <url>
+  <loc>http://jrwalsh1.github.io/categories/ipynb/</loc>
+  <lastmod>2015-08-12T17:38:00Z</lastmod>
+ </url>
+ <url>
+  <loc>http://jrwalsh1.github.io/categories/linear-algebra/</loc>
+  <lastmod>2015-08-12T17:38:00Z</lastmod>
+ </url>
+ <url>
   <loc>http://jrwalsh1.github.io/categories/mathjax/</loc>
   <lastmod>2015-08-11T21:40:00Z</lastmod>
+ </url>
+ <url>
+  <loc>http://jrwalsh1.github.io/categories/python/</loc>
+  <lastmod>2015-08-12T17:38:00Z</lastmod>
+ </url>
+ <url>
+  <loc>http://jrwalsh1.github.io/categories/sql/</loc>
+  <lastmod>2015-08-12T17:38:00Z</lastmod>
  </url>
  <url>
   <loc>http://jrwalsh1.github.io/galleries/</loc>
@@ -52,5 +84,13 @@
  <url>
   <loc>http://jrwalsh1.github.io/posts/interpolations/</loc>
   <lastmod>2015-08-11T20:51:00Z</lastmod>
+ </url>
+ <url>
+  <loc>http://jrwalsh1.github.io/posts/measuring-wind-speeds-from-flights/</loc>
+  <lastmod>2015-08-12T17:38:00Z</lastmod>
+ </url>
+ <url>
+  <loc>http://jrwalsh1.github.io/posts/symmetry-factors-of-graphs/</loc>
+  <lastmod>2015-08-12T05:22:00Z</lastmod>
  </url>
 </urlset>

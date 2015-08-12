@@ -67,7 +67,58 @@ MathJax.Hub.Config({
                 <div class="row">
                     
 <div class="postindex">
-    <article class="h-entry post-text"><header><h1 class="p-name entry-title"><a href="posts/interpolations/" class="u-url">Interpolations</a></h1>
+    <article class="h-entry post-text"><header><h1 class="p-name entry-title"><a href="posts/measuring-wind-speeds-from-flights/" class="u-url">Measuring Wind Speeds from Flights</a></h1>
+        <div class="metadata">
+            <p class="byline author vcard"><span class="byline-name fn">Jon Walsh</span></p>
+            <p class="dateline"><a href="posts/measuring-wind-speeds-from-flights/" rel="bookmark"><time class="published dt-published" datetime="2015-08-12T01:14:53-07:00" itemprop="datePublished" title="Publication date">2015-08-12 01:14</time></a></p>
+                <p class="commentline">            <a href="posts/measuring-wind-speeds-from-flights/#disqus_thread" data-disqus-identifier="cache/posts/measuring-wind-speeds-from-flights.html">Comments</a>
+
+
+        </p>
+</div>
+    </header><div class="p-summary entry-summary">
+    <div>
+<p>If you've ever flown between the East coast and West coast, you know the feeling: going west takes soooo much longer!  The difference in flight times is about an hour, which can be painful if it's tacked onto the end of a long trip.</p>
+<p>Let's run some basic numbers.  Suppose we between SFO and BOS on a 737, which has a cruising speed of $v_{\rm cruise} \sim 500$ mph.  It's $d \sim 2700$ miles between the two cities, so with no wind the flight time would be $t_{\rm flight} = $ 5 hours and 24 minutes.  If it takes $\Delta t = 1$ hour longer for the eastward trip, then the average jet stream velocity, $\bar{v}$, is given by the relation</p>
+<p>$$
+\begin{align}
+&amp;\frac{d}{v_{\rm cruise} - \bar{v}} - \frac{d}{v_{\rm cruise} + \bar{v}} = \Delta t \\
+&amp; \qquad \Rightarrow \; \bar{v} = \frac{d}{\Delta t} \Biggl( \sqrt{1 + \frac{\Delta t^2 v_{\rm cruise}^2}{d^2} } - 1 \Biggr) \approx \frac{v_{\rm cruise} \Delta t}{2d} \, v_{\rm cruise} = \frac{\frac12 \Delta t}{t_{\rm flight}} v_{\rm cruise},
+\end{align}
+$$</p>
+<p>so that in this case $\bar{v} \approx 46 \text{ mph}$.  This is the average jet stream velocity over the flight path (as experienced by the flight), but what if we want to get finer grained than this?  Can we use this basic idea to build a map of the jet stream across the US?</p>
+<p>It turns out, the answer is yes!  And we can do so via a nice linear algebra problem, mixed in with some spherical geometry.  Here's how it goes.</p>
+<p class="more"><a href="posts/measuring-wind-speeds-from-flights/">Read more…</a></p>
+</div>
+    </div>
+    </article><article class="h-entry post-text"><header><h1 class="p-name entry-title"><a href="posts/symmetry-factors-of-graphs/" class="u-url">Symmetry Factors of Graphs</a></h1>
+        <div class="metadata">
+            <p class="byline author vcard"><span class="byline-name fn">Jon Walsh</span></p>
+            <p class="dateline"><a href="posts/symmetry-factors-of-graphs/" rel="bookmark"><time class="published dt-published" datetime="2015-08-11T22:07:14-07:00" itemprop="datePublished" title="Publication date">2015-08-11 22:07</time></a></p>
+                <p class="commentline">            <a href="posts/symmetry-factors-of-graphs/#disqus_thread" data-disqus-identifier="cache/posts/symmetry-factors-of-graphs.html">Comments</a>
+
+
+        </p>
+</div>
+    </header><div class="p-summary entry-summary">
+    <div>
+<p>Particle physicists like to represent things with diagrams.  The popular example is Feynman diagrams, and there are rules to draw and evaluate diagrams for different scattering processes.  Diagrams also arise in the large scale structure of cosmology, where matter fluctuations can be described using perturbation theory (see this <a href="https://en.wikipedia.org/wiki/Cosmological_perturbation_theory" title="Cosmological perturbation theory">Wikipedia article</a>).</p>
+<p>Diagrams for cosmological perturbation theory (specifically large scale structure): they are basically functions of directed graphs.  That is:</p>
+<ul>
+<li>The value of the diagram is the product of weights of edges and vertices.</li>
+<li>Each edge in the diagram is associated with a momentum flow, which enters through the vertices.</li>
+<li>The weight of and edge is a scalar function of the momentum flow in the edge.</li>
+<li>The weight of a vertex is a scalar function of the momentum flow in the edges connecting to the vertex.</li>
+</ul>
+<p>These diagrams have two types of symmetry factors:</p>
+<ul>
+<li>The internal symmetry factor $-$ the number of topologically-invariant permutations of the edges of the graph.</li>
+<li>The external symmetry factor $-$ if the vertices are labeled, the number of permutations of vertices that produce topologically distinct graphs.</li>
+</ul>
+<p class="more"><a href="posts/symmetry-factors-of-graphs/">Read more…</a></p>
+</div>
+    </div>
+    </article><article class="h-entry post-text"><header><h1 class="p-name entry-title"><a href="posts/interpolations/" class="u-url">Interpolations</a></h1>
         <div class="metadata">
             <p class="byline author vcard"><span class="byline-name fn">Jon Walsh</span></p>
             <p class="dateline"><a href="posts/interpolations/" rel="bookmark"><time class="published dt-published" datetime="2015-08-11T13:47:04-07:00" itemprop="datePublished" title="Publication date">2015-08-11 13:47</time></a></p>

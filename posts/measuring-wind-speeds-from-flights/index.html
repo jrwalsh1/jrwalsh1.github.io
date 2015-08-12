@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html prefix="
+og: http://ogp.me/ns#
+article: http://ogp.me/ns/article#
+" lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Measuring Wind Speeds from Flights | Math and Data</title>
+<link href="../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+<link rel="alternate" type="application/rss+xml" title="RSS" href="../../rss.xml">
+<link rel="canonical" href="http://jrwalsh1.github.io/posts/measuring-wind-speeds-from-flights/">
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+    },
+    displayAlign: 'center', // Change this to 'center' to center equations.
+    "HTML-CSS": {
+        styles: {'.MathJax_Display': {"margin": 0}},
+        linebreaks: { automatic: true }
+    }
+});
+</script><!--[if lt IE 9]><script src="../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Jon Walsh">
+<meta property="og:site_name" content="Math and Data">
+<meta property="og:title" content="Measuring Wind Speeds from Flights">
+<meta property="og:url" content="http://jrwalsh1.github.io/posts/measuring-wind-speeds-from-flights/">
+<meta property="og:description" content="If you've ever flown between the East coast and West coast, you know the feeling: going west takes soooo much longer!  The difference in flight times is about an hour, which can be painful if it's tac">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2015-08-12T01:14:53-07:00">
+<meta property="article:tag" content="data science">
+<meta property="article:tag" content="flights">
+<meta property="article:tag" content="ipynb">
+<meta property="article:tag" content="linear algebra">
+<meta property="article:tag" content="mathjax">
+<meta property="article:tag" content="python">
+<meta property="article:tag" content="SQL">
+</head>
+<body>
+<a href="#content" class="sr-only sr-only-focusable">Skip to main content</a>
+
+<!-- Menubar -->
+
+<div class="container">
+    <div class="page-header">
+        <ul class="nav nav-pills pull-right">
+<li>
+    <a href="index.md" id="sourcelink">Source</a>
+    </li>
+            
+        </ul>
+<a href="http://jrwalsh1.github.io/">
+            <h2 class="text-muted">
+                <span id="blog-title"><strong>Math and Data</strong></span>
+            </h2>
+        </a>
+    </div> <!-- ./page-header -->
+</div> <!-- ./container -->
+
+<!-- End of Menubar -->
+
+<div class="container" id="content" role="main">
+    <div class="row">
+        <div class="col-sm-3 col-md-2">
+            <ul class="nav nav-pills nav-stacked">
+<li>
+<a href="../../about/index.html">About</a>
+                </li>
+<li>
+<a href="../../categories/">Tags</a>
+                </li>
+<li>
+<a href="../../rss.xml">RSS feed</a>
+
+                
+            </li>
+</ul>
+</div> <!-- ./col -->
+        <div class="col-sm-9 col-md-10">
+            <div class="body-content">
+                <!--Body content-->
+                <div class="row">
+                    
+<article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title" itemprop="headline name"><a href="." class="u-url">Measuring Wind Speeds from Flights</a></h1>
+
+        <div class="metadata">
+            <p class="byline author vcard"><span class="byline-name fn">Jon Walsh</span></p>
+            <p class="dateline"><a href="." rel="bookmark"><time class="published dt-published" datetime="2015-08-12T01:14:53-07:00" itemprop="datePublished" title="2015-08-12 01:14">2015-08-12 01:14</time></a></p>
+                <p class="commentline">            <a href=".#disqus_thread" data-disqus-identifier="cache/posts/measuring-wind-speeds-from-flights.html">Comments</a>
+
+
+                    </p>
+<p class="sourceline"><a href="index.md" id="sourcelink">Source</a></p>
+
+        </div>
+        
+    </header><div class="e-content entry-content" itemprop="articleBody text">
+    <div>
+<p>If you've ever flown between the East coast and West coast, you know the feeling: going west takes soooo much longer!  The difference in flight times is about an hour, which can be painful if it's tacked onto the end of a long trip.</p>
+<p>Let's run some basic numbers.  Suppose we between SFO and BOS on a 737, which has a cruising speed of $v_{\rm cruise} \sim 500$ mph.  It's $d \sim 2700$ miles between the two cities, so with no wind the flight time would be $t_{\rm flight} = $ 5 hours and 24 minutes.  If it takes $\Delta t = 1$ hour longer for the eastward trip, then the average jet stream velocity, $\bar{v}$, is given by the relation</p>
+<p>$$
+\begin{align}
+&amp;\frac{d}{v_{\rm cruise} - \bar{v}} - \frac{d}{v_{\rm cruise} + \bar{v}} = \Delta t \\
+&amp; \qquad \Rightarrow \; \bar{v} = \frac{d}{\Delta t} \Biggl( \sqrt{1 + \frac{\Delta t^2 v_{\rm cruise}^2}{d^2} } - 1 \Biggr) \approx \frac{v_{\rm cruise} \Delta t}{2d} \, v_{\rm cruise} = \frac{\frac12 \Delta t}{t_{\rm flight}} v_{\rm cruise},
+\end{align}
+$$</p>
+<p>so that in this case $\bar{v} \approx 46 \text{ mph}$.  This is the average jet stream velocity over the flight path (as experienced by the flight), but what if we want to get finer grained than this?  Can we use this basic idea to build a map of the jet stream across the US?</p>
+<p>It turns out, the answer is yes!  And we can do so via a nice linear algebra problem, mixed in with some spherical geometry.  Here's how it goes.</p>
+<!-- TEASER_END -->
+
+<h2><span style="color:blue">The Data</span></h2>
+<p>I started to think about this project when I ran across a nice, big publicly available data set on flights within the American Statistical Association, from a <a href="http://stat-computing.org/dataexpo/2009/" title="2009 ASA data expo">2009 data expo</a>, here.  There are 120 million flight records spread over nearly 21 years, and the data is pretty clean.  We'll use 5 years of the data here, from 2004-2008, which has more than 32 million flights (plus about 4 million we drop when we clean the data).  Each flight record contains the following information:</p>
+<ul>
+<li>date</li>
+<li>departure and arrival times, both scheduled and actual</li>
+<li>carrier code, flight number, plane's tail number</li>
+<li>origin and destination, distance between airports</li>
+<li>flight times: elapsed time (actual and scheduled), taxi time in/out, time in the air</li>
+<li>delays: arrival and departure delays, delays in categories (carrier, weather, NAS, security, late   aircraft)</li>
+<li>flags for whether the flight was cancelled (and why), or diverted</li>
+</ul>
+<p>Which is a lot of info!  They even provide accompanying data sets on airports, carriers, and planes.  The data comes in .csv files by year, so it's easy to drop into a MySQL database.</p>
+<p>Relevant to our question, what does the data let us do?  We can compute the average velocity for each flight, using the air time and distance traveled.  The airport dataset also has handy latitude and longitude coordinates, so we can figure out the idealized path the plane travels (on a great circle).</p>
+<p>What doesn't this data set contain?  The most important missing item is the actual flight path.  If this deviates far from a great circle, the velocity of the flight may be very different from what is reported (and the path the flight travels will be different).  This is a feature we'll have to deal with, and maybe with another data set, such as one from a flight tracking site, we could build a more precise model.  But this data set is a great example of what you can do with less-than-complete information, so let's build a model!</p>
+<p>Here's a map of every airport with more than 100,000 enplanements per year (using recent passenger data), with a few example flight paths: San Francisco to Boston, Seattle to Miami, and Dallas-Fort Worth to Chicago.</p>
+<p><br></p>
+<div style="text-align: center;"><img src="../../images/map_airports.png" alt="airports in the US" width="700"></div>
+<br><p>There are 203 airports on the map, and the smaller ones are needed to give reasonable coverage of the High Plains and eastern Northwest.  Here are all flight paths between pairs of airports with more than 100 flights in each direction in the 5-year time range of the data.  Of the <span style="color:red">20503</span> possible airport pairs (pairs drawn from the 203 airports), there are <span style="color:red">2334</span> that meet this criterion.</p>
+<p><br></p>
+<div style="text-align: center;"><img src="../../images/map_allpaths.png" alt="flight paths" width="700"></div>
+<br><h2><span style="color:blue">The Model</span></h2>
+<p>First, let's discuss flights between a pair of cities $i$ and $j$; we'll label this route as path $p$.  Since we're assuming all flights on $p$ follow the same great circle, we can take the average speed of flights from $i$ to $j$, ${\bar v}^{(ij)}_{\text{flight}}$, and the average speed of flights from $j$ to $i$, $\bar{v}^{(ji)}_{\rm flight}$.  The jet stream parallel to the flight path (averaged over the flight path) is given by</p>
+<div> $$
+\begin{align}
+{\bar v}^{(p)} = \frac12 ( \bar{v}^{(ij)}_{\rm flight} - \bar{v}^{(ji)}_{\rm flight}).
+\end{align}
+$$ </div>
+
+<p>We can write this distance-averaged speed in terms of the jet stream velocity $\vec{v}$ as a line integral over the path $C_p$ of the flight:</p>
+<p>$$
+\bar{v}^{(p)} = \frac{1}{d_p} \int_{C_p} d\vec{s} \cdot \vec{v} (s),
+$$</p>
+<p>where $d_p$ is the distance between the cities.  We can discretize the integral by dividing the US up into patches over which we approximate the jet stream as having a constant direction; then we have</p>
+<p>$$
+\bar{v}^{(p)} = \frac{1}{d_p} \sum_k \vec{r}_k^{(p)} \cdot \vec{v}_k,
+$$</p>
+<p>where the sum is over patches and $\vec{r}_k^{(p)}$ is the distance vector of the path in patch $k$.</p>
+<p>Here's a map of (26) boxes in the US we'll use; we'll have a speed measurement in each box.  In the eastern US, which has denser flight patterns, we can use smaller boxes and get good enough coverage.</p>
+<p><br></p>
+<div style="text-align: center;"><img src="../../images/map_boxes.png" alt="US regions for measurement" width="700"></div>
+<br><p>In terms of latitude and longitude directions (which are just $\hat{\phi}$ and $\hat{\theta}$ in spherical coordinates),</p>
+<div> $$
+\frac{1}{d_p} \vec{r}_k^{(p)} \cdot \vec{v}_k = \dfrac{1}{d_p} \bigl( r_{k,\theta}^{(p)} v_{k,\theta} + r_{k,\phi}^{(p)} v_{k,\phi} \bigr).
+$$ </div>
+
+<p>For any flight path, we can measure $\vec{r}_k^{(p)}$ and $d_p$, meaning that we can access the unknowns $v_{k,\theta}$ and $v_{k,\phi}$.</p>
+<p>So now we have the dependence on the jet stream in patches of sky for one flight path -- great!  How do we turn this into a system where we can solve for the jet stream velocity?  We use a whole bunch of flight paths!  Using our data set, we can take a large collection of cities, and look at flights between pairs.  Let's be concrete and label them $1, \ldots, N_p$, and label the number of patches $1, \ldots, N_b$.</p>
+<p>For each path, we get an equation like the above, where we can express the average jet stream speed along that path (which we can measure from the average velocities) in terms of the components of jet stream velocities in each patch.  This forms a linear system, which is overcomplete as you might expect because we can easily have many more pairs of cities (flight paths) than patches of sky.</p>
+<p>The linear system can be written</p>
+<p>$$
+\mathbf{M} \, V = \bar{V},
+$$</p>
+<p>where</p>
+<p>$$
+\mathbf{M} = \left( \begin{matrix}
+   r_{1,\theta}^{(1)} / d_1 &amp; r_{1,\phi}^{(1)} / d_1 &amp;  r_{2,\theta}^{(1)} / d_1 &amp; r_{2,\phi}^{(1)} / d_1 &amp; \ldots \\
+   r_{1,\theta}^{(2)} / d_2 &amp; r_{1,\phi}^{(2)} / d_2 &amp;  r_{2,\theta}^{(2)} / d_2 &amp; r_{2,\phi}^{(2)} / d_2 &amp; \ldots \\
+   \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp;
+\end{matrix} \right),
+$$</p>
+<p>$$
+V = \left( \begin{matrix}
+   v_{1,\theta} \\
+   v_{1,\phi} \\
+   v_{2,\theta} \\
+   v_{2,\phi} \\
+   \vdots
+\end{matrix} \right) ,
+\quad \bar{V} = \left( \begin{matrix}
+   \bar{v}^{(1)} \\
+   \bar{v}^{(2)} \\
+   \vdots
+\end{matrix} \right) .
+$$</p>
+<p>The matrix $\mathbf{M}$ is $N_p \times 2N_b$, with $N_p$ the larger dimension (so that the flight paths provide good coverage to the different regions of the map).  This means that the system is overconstrained.  A simple approach, then, is to use least squares minimization, which is the minimization condition</p>
+<p>$$
+\min_{V} \, \lvert \lvert \mathbf{M} V - \bar{V} \rvert \rvert,
+$$</p>
+<p>and has a solution</p>
+<p>$$
+V = \bigl( \mathbf{M}^{\rm T} \mathbf{M} \bigr)^{-1} \mathbf{M}^{\rm T} \bar{V}.
+$$</p>
+<p>This is great!  We have a way to measure the jet stream from the data set we have, since we can construct $\mathbf{M}$ and $\bar{V}$ using the flight information and the geometry of the cities we'll use in the data set.</p>
+<p>Before we start looking at the data, let's briefly talk about the assumptions inherent in the model.  In calculating $\vec{\bar{v}}_{\rm jet}^{(ij)}$ by the simple difference, we have assumed that flights in both directions have the same fraction of types of planes -- certain models of planes are faster or slower than others, and faster planes go more often from $i$ to $j$ than $j$ to $i$, this will throw off the measurement of the average jet stream velocity.  This is a good assumption given that on many routes planes hop back and forth between cities.</p>
+<p>Another assumption we've made, given what is in the data set, is that each flight follows a great circle.  While this is the shortest path, planes will sometimes deviate from a great circle to avoid bad weather or optimize the wind assist from the jet stream.  This is particularly true of flights over the Atlantic, where east and west bound flights often fly at very different latitudes (in the US, this seems to happen much less often).  However, time is money, and so deviations from the shortest path are usually minimal.  Scanning through flight paths online, most seem to travel a path whose distance is within a few percent of the shortest.  From the structure of the model, if we had flight path information for individual flights, we could input this into the model and gain more fine-grained sensitivity to the jet stream.</p>
+<p>Now let's look at the data and do the measurement!</p>
+<h4><span style="color:blue">Setting Up a Database</span></h4>
+<p>The data is fairly easy to work with, but it's useful to look at the analysis pipeline.  The data come in <code>.csv</code> format divided by year; here's the first few lines for 2008:</p>
+<p><br></p>
+<pre class="code literal-block">Year,Month,DayofMonth,DayOfWeek,DepTime,CRSDepTime,ArrTime,CRSArrTime,UniqueCarrier,FlightNum,TailNum,ActualElapsedTime,CRSElapsedTime,AirTime,ArrDelay,DepDelay,Origin,Dest,Distance,TaxiIn,TaxiOut,Cancelled,CancellationCode,Diverted,CarrierDelay,WeatherDelay,NASDelay,SecurityDelay,LateAircraftDelay
+2008,1,3,4,2003,1955,2211,2225,WN,335,N712SW,128,150,116,-14,8,IAD,TPA,810,4,8,0,,0,NA,NA,NA,NA,NA
+2008,1,3,4,754,735,1002,1000,WN,3231,N772SW,128,145,113,2,19,IAD,TPA,810,5,10,0,,0,NA,NA,NA,NA,NA
+2008,1,3,4,628,620,804,750,WN,448,N428WN,96,90,76,14,8,IND,BWI,515,3,17,0,,0,NA,NA,NA,NA,NA
+2008,1,3,4,926,930,1054,1100,WN,1746,N612SW,88,90,78,-6,-4,IND,BWI,515,3,7,0,,0,NA,NA,NA,NA,NA
+</pre>
+
+
+<p><br></p>
+<p>Similar files exist for holding data for airports, carriers, and planes.  The database is that complete -- you can see the routes that a given plane (tagged by its tail number) flies!</p>
+<p>Let's set up a <code>MySQL</code> database for this data.  First we create the database and start using it:</p>
+<p><br></p>
+<pre class="code literal-block"><span class="k">CREATE</span> <span class="k">DATABASE</span> <span class="n">flight_data</span><span class="p">;</span>
+<span class="k">USE</span> <span class="n">flight_data</span><span class="p">;</span>
+</pre>
+
+
+<p><br></p>
+<p>Then we create tables for each of our 4 categories.  For the flight data, which is the most complex by far, the syntax is</p>
+<p><br></p>
+<pre class="code literal-block"><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="nf">flights</span> <span class="p">(</span><span class="kt">Year</span> <span class="kt">INT</span><span class="p">,</span> <span class="n">Month</span> <span class="kt">INT</span><span class="p">,</span> <span class="n">DayofMonth</span> <span class="kt">INT</span><span class="p">,</span> <span class="n">DayofWeek</span> <span class="kt">INT</span><span class="p">,</span> <span class="n">DepTime</span> <span class="kt">INT</span><span class="p">,</span> <span class="n">CRSDepTime</span> <span class="kt">INT</span><span class="p">,</span> <span class="n">ArrTime</span> <span class="kt">INT</span><span class="p">,</span> <span class="n">CRSArrTime</span> <span class="kt">INT</span><span class="p">,</span> <span class="n">UniqueCarrier</span> <span class="kt">VARCHAR</span><span class="p">(</span><span class="mi">5</span><span class="p">),</span> <span class="n">FlightNum</span> <span class="kt">INT</span><span class="p">,</span> <span class="n">TailNum</span> <span class="kt">VARCHAR</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span> <span class="n">ActualElapsedTime</span> <span class="kt">INT</span><span class="p">,</span> <span class="n">CRSElapsedTime</span> <span class="kt">INT</span><span class="p">,</span> <span class="n">AirTime</span> <span class="kt">INT</span><span class="p">,</span> <span class="n">ArrDelay</span> <span class="kt">INT</span><span class="p">,</span> <span class="n">DepDelay</span> <span class="kt">INT</span><span class="p">,</span> <span class="n">Origin</span> <span class="kt">VARCHAR</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">Dest</span> <span class="kt">VARCHAR</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">Distance</span> <span class="kt">INT</span><span class="p">,</span> <span class="n">TaxiIn</span> <span class="kt">INT</span><span class="p">,</span> <span class="n">TaxiOut</span> <span class="kt">INT</span><span class="p">,</span> <span class="n">Cancelled</span> <span class="kt">INT</span><span class="p">,</span> <span class="n">CancellationCode</span> <span class="kt">VARCHAR</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">Diverted</span> <span class="kt">VARCHAR</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">CarrierDelay</span> <span class="kt">INT</span><span class="p">,</span> <span class="n">WeatherDelay</span> <span class="kt">INT</span><span class="p">,</span> <span class="n">NASDelay</span> <span class="kt">INT</span><span class="p">,</span> <span class="n">SecurityDelay</span> <span class="kt">INT</span><span class="p">,</span> <span class="n">LateAircraftDelay</span> <span class="kt">INT</span><span class="p">);</span>
+</pre>
+
+
+<p><br></p>
+<p>And to fill it we can load directly from the <code>.csv</code> files (after removing the header).  For the 2008 year,</p>
+<p><br></p>
+<pre class="code literal-block"><span class="k">LOAD</span> <span class="n">DATA</span> <span class="n">LOCAL</span> <span class="k">INFILE</span> <span class="s2">"/Users/.../2008.csv"</span> <span class="k">INTO</span> <span class="k">TABLE</span> <span class="n">flights</span> <span class="n">FIELDS</span> <span class="k">TERMINATED</span> <span class="k">BY</span> <span class="s1">','</span> <span class="k">LINES</span> <span class="k">TERMINATED</span> <span class="k">BY</span> <span class="s1">'\n'</span><span class="p">;</span>
+</pre>
+
+
+<p><br></p>
+<p>It's that easy!  The same process works for the remaining flight data, as well as the other categories.</p>
+<h4><span style="color:blue">Working with the data</span></h4>
+<p>This kind of project is great for <code>python</code>, especially with <code>ipython notebook</code> and <code>matplotlib</code> to allow easy exploration of the data.  Since the model involves some linear algebra, <code>numpy</code> is a necessity (<code>pandas</code> would also be useful, although I didn't use it here).</p>
+<p>To read in the data, I use the <code>pymysql</code> module to interact with <code>MySQL</code>.  A simple function can call the <code>flight_data</code> database with an input query:</p>
+<p><br></p>
+<pre class="code literal-block"><span class="c">## function to query the database</span>
+<span class="k">def</span> <span class="nf">sqlExec</span><span class="p">(</span><span class="n">query</span><span class="p">):</span>
+    <span class="sd">"""Given file name, reads input file and stores data"""</span>
+    <span class="n">db</span> <span class="o">=</span> <span class="n">pymysql</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="s">"root"</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s">"localhost"</span><span class="p">,</span> <span class="n">passwd</span><span class="o">=</span><span class="s">""</span><span class="p">,</span> <span class="n">db</span><span class="o">=</span><span class="s">"flight_data"</span><span class="p">,</span> <span class="n">cursorclass</span><span class="o">=</span><span class="n">pymysql</span><span class="o">.</span><span class="n">cursors</span><span class="o">.</span><span class="n">DictCursor</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">db</span><span class="p">:</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="n">tables</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">tables</span>
+</pre>
+
+
+<p><br></p>
+<p>In our case, we want to pull down flights that are not cancelled or diverted.  Looking through the data, JetBlue flights appear to frequently have problems with the flight time not accounting for the change in time zone, which leads to an incorrect speed measurement.  So, we don't take JetBlue flights.  If we lost a lot of data because of this we could try to fix the flight records, but the data set is more than enough when we play it safe and drop JetBlue's records.</p>
+<p><br></p>
+<pre class="code literal-block"><span class="c">## pull flights from the database</span>
+<span class="c">## Jet Blue flights (UniqueCarrier = 'B6') often have the wrong time zone for the origin or destination, so we drop this data</span>
+<span class="n">flights</span> <span class="o">=</span> <span class="n">sqlExec</span><span class="p">(</span><span class="s">"SELECT Origin,Dest,Distance,AirTime FROM flights WHERE Origin IN "</span><span class="o">+</span><span class="n">sqlsetairports</span><span class="o">+</span><span class="s">" AND Dest IN "</span><span class="o">+</span><span class="n">sqlsetairports</span><span class="o">+</span><span class="s">" AND Cancelled = 0 AND Diverted = 0 AND UniqueCarrier != </span><span class="se">\"</span><span class="s">B6</span><span class="se">\"</span><span class="s">"</span><span class="p">)</span>
+<span class="k">print</span> <span class="s">"Total of "</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">flights</span><span class="p">))</span><span class="o">+</span><span class="s">" flights"</span>
+</pre>
+
+
+<p><br></p>
+<p><code>sqlsetairports</code> is a long list of the 203 airports we are using, pulled from the airports database.  Running this query on our database returns just over 32 million flight records.</p>
+<p>From here, we need to measure the speed of each flight between each pair of cities, then average for each flight route.  First we create a dictionary, <code>speeds</code>, whose key will be a pair of cities (a string representing the pair), and whose value is a list of speeds for all flights in that route:</p>
+<p><br></p>
+<pre class="code literal-block"><span class="k">for</span> <span class="n">flight</span> <span class="ow">in</span> <span class="n">flights</span><span class="p">:</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">flight</span><span class="p">[</span><span class="s">"Origin"</span><span class="p">]</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">flight</span><span class="p">[</span><span class="s">"Dest"</span><span class="p">]</span>
+    <span class="n">dist</span> <span class="o">=</span> <span class="n">flight</span><span class="p">[</span><span class="s">"Distance"</span><span class="p">]</span> <span class="c"># distance is in miles</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="n">flight</span><span class="p">[</span><span class="s">"AirTime"</span><span class="p">]</span><span class="o">/</span><span class="mi">60</span> <span class="c"># convert time to hours</span>
+    <span class="c"># check the time is nonzero</span>
+    <span class="k">if</span> <span class="n">time</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">speed</span> <span class="o">=</span> <span class="n">dist</span> <span class="o">/</span> <span class="n">time</span>
+        <span class="n">speeds</span><span class="p">[</span><span class="n">airportpair_key</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">)]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">speed</span><span class="p">)</span>
+</pre>
+
+
+<p><br></p>
+<p>We've define a simple function here to take in strings for each airport (e.g., "SFO") and output a combined string to represent the pair; just a little syntatic sugar.  Next we average:</p>
+<p><br></p>
+<pre class="code literal-block"><span class="c">## calculate the mean windspeed between airport pairs</span>
+<span class="n">vbarspeeds</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">airports</span><span class="p">)):</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">airports</span><span class="p">)):</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">airports</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">airports</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+        <span class="c"># only allow city pairs with more than 100 flights each way</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">speeds</span><span class="p">[</span><span class="n">airportpair_key</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">)])</span> <span class="o">&gt;</span> <span class="mi">100</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">speeds</span><span class="p">[</span><span class="n">airportpair_key</span><span class="p">(</span><span class="n">B</span><span class="p">,</span><span class="n">A</span><span class="p">)])</span> <span class="o">&gt;</span> <span class="mi">100</span><span class="p">:</span>
+            <span class="n">AtoBspeed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">speeds</span><span class="p">[</span><span class="n">airportpair_key</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">)])</span>
+            <span class="n">BtoAspeed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">speeds</span><span class="p">[</span><span class="n">airportpair_key</span><span class="p">(</span><span class="n">B</span><span class="p">,</span><span class="n">A</span><span class="p">)])</span>
+            <span class="n">vbar</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">AtoBspeed</span> <span class="o">-</span> <span class="n">BtoAspeed</span><span class="p">)</span>
+            <span class="c"># keep things symmetrized: we include the A -&gt; B and B -&gt; A paths</span>
+            <span class="c"># this does not affect the least squares but does make comparisons easier</span>
+            <span class="n">vbarspeeds</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">vbar</span><span class="p">])</span>
+            <span class="n">vbarspeeds</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">B</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="o">-</span><span class="n">vbar</span><span class="p">])</span>
+</pre>
+
+
+<p><br></p>
+<p>This gives us the average wind speed $\bar{v}^{(p)}$ for each flight path.  The technically challenging part of the model is to take each flight path and construct the relevant entries in $\mathbf{M}$, which contain the oriented path of the flight in each box.  We can accomplish this using a nice parameterization of a great circle in terms of latitude and longitude (which are the coordinates we draw our boxes in):</p>
+<p><br></p>
+<pre class="code literal-block"><span class="c">## parametric function for a great circle between two longitude, latitude points</span>
+<span class="k">def</span> <span class="nf">greatCircleFunc</span><span class="p">(</span><span class="n">coords1</span><span class="p">,</span> <span class="n">coords2</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="sd">"""Gives parametric formula for the great circle between two latitude, longitude points. Returns [latitude, longitude] in degrees."""</span>
+    <span class="p">[</span><span class="n">long1</span><span class="p">,</span> <span class="n">lat1</span><span class="p">]</span> <span class="o">=</span> <span class="n">coords1</span>
+    <span class="p">[</span><span class="n">long2</span><span class="p">,</span> <span class="n">lat2</span><span class="p">]</span> <span class="o">=</span> <span class="n">coords2</span>
+    <span class="c">## convert latitudes to polar angles (radians)</span>
+    <span class="n">theta1</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">-</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">180.</span><span class="p">)</span> <span class="o">*</span> <span class="n">lat1</span>
+    <span class="n">theta2</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">-</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">180.</span><span class="p">)</span> <span class="o">*</span> <span class="n">lat2</span>
+    <span class="c">## convert longitudes radians</span>
+    <span class="n">phi1</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">180.</span><span class="p">)</span> <span class="o">*</span> <span class="n">long1</span>
+    <span class="n">phi2</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">180.</span><span class="p">)</span> <span class="o">*</span> <span class="n">long2</span>
+    <span class="c">## create unit vectors to each point</span>
+    <span class="n">unitvec1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi1</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phi1</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta1</span><span class="p">)</span> <span class="p">])</span>
+    <span class="n">unitvec2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi2</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phi2</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta2</span><span class="p">)</span> <span class="p">])</span>
+    <span class="c">## angle between the two points</span>
+    <span class="n">tau</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arccos</span><span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">unitvec1</span><span class="p">,</span> <span class="n">unitvec2</span><span class="p">)</span> <span class="p">)</span>
+    <span class="c">## parametric terms</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="n">t</span><span class="p">)</span><span class="o">*</span><span class="n">tau</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">tau</span><span class="p">)</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">t</span><span class="o">*</span><span class="n">tau</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">tau</span><span class="p">)</span>
+    <span class="c">## compute latitude, longitude</span>
+    <span class="n">xt</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi1</span><span class="p">)</span> <span class="o">+</span> <span class="n">B</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi2</span><span class="p">)</span>
+    <span class="n">yt</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phi1</span><span class="p">)</span> <span class="o">+</span> <span class="n">B</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phi2</span><span class="p">)</span>
+    <span class="n">zt</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta1</span><span class="p">)</span> <span class="o">+</span> <span class="n">B</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta2</span><span class="p">)</span>
+    <span class="n">longt</span> <span class="o">=</span> <span class="p">(</span><span class="mf">180.</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">yt</span><span class="p">,</span> <span class="n">xt</span><span class="p">)</span>
+    <span class="n">latt</span> <span class="o">=</span> <span class="p">(</span><span class="mf">180.</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">zt</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">xt</span><span class="o">*</span><span class="n">xt</span> <span class="o">+</span> <span class="n">yt</span><span class="o">*</span><span class="n">yt</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="p">[</span><span class="n">longt</span><span class="p">,</span> <span class="n">latt</span><span class="p">]</span>
+
+ <span class="c">## compute box fractions and path directions in latitude-longitude space</span>
+ <span class="k">def</span> <span class="nf">boxfractions</span><span class="p">(</span><span class="n">coords1</span><span class="p">,</span> <span class="n">coords2</span><span class="p">,</span> <span class="n">boxes</span><span class="p">):</span>
+     <span class="sd">"""Computes the fraction of total distance of a geodesic path in a given latitude-longitude box.  Returns the distance fractions in the path for each box."""</span>
+     <span class="p">[</span><span class="n">long1</span><span class="p">,</span> <span class="n">lat1</span><span class="p">]</span> <span class="o">=</span> <span class="n">coords1</span>
+     <span class="p">[</span><span class="n">long2</span><span class="p">,</span> <span class="n">lat2</span><span class="p">]</span> <span class="o">=</span> <span class="n">coords2</span>
+     <span class="c">## counter for each box</span>
+     <span class="n">boxpts</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">boxes</span><span class="p">))]</span>
+     <span class="c">## loop over steps in t, use parametric function of geodesic path</span>
+     <span class="n">nsteps</span> <span class="o">=</span> <span class="mi">99</span>
+     <span class="k">for</span> <span class="n">nstep</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nsteps</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+         <span class="c">## get t value and latitude, longitude</span>
+         <span class="n">tval</span> <span class="o">=</span> <span class="n">nstep</span> <span class="o">*</span> <span class="mf">1.</span> <span class="o">/</span> <span class="n">nsteps</span>
+         <span class="p">[</span><span class="n">longt</span><span class="p">,</span> <span class="n">latt</span><span class="p">]</span> <span class="o">=</span> <span class="n">greatCircleFunc</span><span class="p">(</span><span class="n">coords1</span><span class="p">,</span> <span class="n">coords2</span><span class="p">,</span> <span class="n">tval</span><span class="p">)</span>
+         <span class="c">## loop over boxes</span>
+         <span class="k">for</span> <span class="n">nbox</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">boxes</span><span class="p">)):</span>
+             <span class="c">## check if our point is in the box</span>
+             <span class="k">if</span> <span class="n">boxes</span><span class="p">[</span><span class="n">nbox</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">longt</span> <span class="o">&lt;</span> <span class="n">boxes</span><span class="p">[</span><span class="n">nbox</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="ow">and</span> <span class="n">boxes</span><span class="p">[</span><span class="n">nbox</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">latt</span> <span class="o">&lt;</span> <span class="n">boxes</span><span class="p">[</span><span class="n">nbox</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]:</span>
+                 <span class="n">boxpts</span><span class="p">[</span><span class="n">nbox</span><span class="p">]</span> <span class="o">+=</span> <span class="mf">1.</span><span class="o">/</span><span class="p">(</span><span class="n">nsteps</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+     <span class="k">return</span> <span class="n">boxpts</span>
+</pre>
+
+
+<p><br></p>
+<p>The second function will compute the fraction of the great circle path between two coordinates in a given set of latitude-longitude boxes.  To construct $\mathbf{M}$, we apply this function to each path:</p>
+<p><br></p>
+<pre class="code literal-block"><span class="c">## construct M</span>
+<span class="c">## for each path, we record the longitude then latitude components</span>
+<span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">vbarspeeds</span><span class="p">:</span>
+    <span class="p">[</span><span class="n">long1</span><span class="p">,</span> <span class="n">lat1</span><span class="p">]</span> <span class="o">=</span> <span class="n">airportcoords</span><span class="p">[</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+    <span class="p">[</span><span class="n">long2</span><span class="p">,</span> <span class="n">lat2</span><span class="p">]</span> <span class="o">=</span> <span class="n">airportcoords</span><span class="p">[</span><span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+    <span class="n">boxfracs</span> <span class="o">=</span> <span class="n">boxfractions</span><span class="p">(</span><span class="n">airportcoords</span><span class="p">[</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">airportcoords</span><span class="p">[</span><span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="n">boxes</span><span class="p">)</span>
+    <span class="c">## here we approximate the direction of travel in each box as a straight line in latitude-longitude space</span>
+    <span class="c">## this is a reasonable approximation for the direction</span>
+    <span class="n">rhatlat</span> <span class="o">=</span> <span class="p">(</span><span class="n">lat2</span> <span class="o">-</span> <span class="n">lat1</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">lat2</span> <span class="o">-</span> <span class="n">lat1</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">lat2</span> <span class="o">-</span> <span class="n">lat1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">long2</span> <span class="o">-</span> <span class="n">long1</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">long2</span> <span class="o">-</span> <span class="n">long1</span><span class="p">))</span>
+    <span class="n">rhatlong</span> <span class="o">=</span> <span class="p">(</span><span class="n">long2</span> <span class="o">-</span> <span class="n">long1</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">lat2</span> <span class="o">-</span> <span class="n">lat1</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">lat2</span> <span class="o">-</span> <span class="n">lat1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">long2</span> <span class="o">-</span> <span class="n">long1</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">long2</span> <span class="o">-</span> <span class="n">long1</span><span class="p">))</span>
+    <span class="n">row</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">frac</span> <span class="ow">in</span> <span class="n">boxfracs</span><span class="p">:</span>
+        <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rhatlong</span> <span class="o">*</span> <span class="n">frac</span><span class="p">)</span>
+        <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rhatlat</span> <span class="o">*</span> <span class="n">frac</span><span class="p">)</span>
+    <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+<span class="n">M</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
+</pre>
+
+
+<p><br></p>
+<p>Note that we're assuming the great circle path is straight, along the mean great circle path, in each box.  Since the total area of the US is small enough so that the flight paths are fairly straight, this is a reasonable approximation.</p>
+<p>Finally, we've just got to do the basic linear algebra to get the wind velocities.</p>
+<p><br></p>
+<pre class="code literal-block"><span class="c">## now find vJ</span>
+<span class="n">Mlsm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">M</span><span class="p">),</span> <span class="n">M</span><span class="p">)),</span><span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">M</span><span class="p">)))</span>
+<span class="n">vJ</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">Mlsm</span><span class="p">,</span> <span class="n">vbar</span><span class="p">)</span>
+</pre>
+
+
+<p><br></p>
+<p>And now we can start plotting!  To make the figures with the maps, I wanted to use an equirectangular projection (Cartesian in latitude and longitude) since it makes drawing the flight paths easy, so I found a simple US map and layed down coordinates on it.  This is not a common projection you'll see because it has navigational drawbacks (it's not conformal or equal area), but it's useful here.  </p>
+<p>I've only given snippets of the analysis code here; if you want to see more, you can checkout my <a href="https://github.com/jrwalsh1/FlightData" title="FlightData">github repo</a> for this project.  Let's look at some plots.</p>
+<h2><span style="color:blue">Measuring the Jet Stream</span></h2>
+<p>Let's start with a couple of examples for the average jet stream velocity between pairs of cities.  Here's a histogram of all flights between San Francisco and Boston; you can see there's a nice distribution for each flight direction (SFO to BOS and BOS to SFO) with a clear separation between the two directions.  The average velocities are different by about 81 mph, meaning the average jet stream velocity speed speeds up the flight from SFO to BOS by ~40 mph and slows down the flight from BOS to SFO by ~40 mph.</p>
+<div>
+<br><div style="text-align: center;"><img src="../../images/speeds_SFO_BOS.png" alt="SFO &lt;-&gt; BOS speeds" width="500"></div>
+<br>
+</div>
+
+<p>Here's another case, a short (mostly north-south) flight between Dallas-Fort Worth and Houston:</p>
+<div>
+<br><div style="text-align: center;"><img src="../../images/speeds_DFW_IAH.png" alt="DFW &lt;-&gt; IAH speeds" width="500"></div>
+<br>
+</div>
+
+<p>There's basically no effect from the jet stream here, which indicates the average jet stream is perpendicular to the flight path.  Looking at these histograms, you can see the reason why we want to require a certain number of flights for each path: we want to have sufficient statistics to accurately resolve the average jet stream velocity.</p>
+<p>OK, so we can now put everything together! We take the 2334 flight paths and compute $\bar{V}$, and using the path directions in each box we construct $\mathbf{M}$.  Using the least squares minimization we can then solve for $V$ and plot the average jet stream velocities:</p>
+<div>
+<br><div style="text-align: center;"><img src="../../images/map_windspeed.png" alt="wind speeds" width="700"></div>
+<br>
+</div>
+
+<p>Looks great! You can see the jet stream is west-to-east, with a magnitude in the 20 - 40 mph range (see the legend on the lower right).  The velocities are continuously flowing between boxes, a good sign of consistency.</p>
+<p>Now that we've had a chance to look at this map, we can talk about what this measurement really is.  The jet stream is a constantly changing flow, and the high-velocity parts of it can be rather narrow (e.g., a hundred miles wide) and confined to certain altitudes.  Our data is time averaged over a long period, so we are seeing the average wind speed.  We'll talk a bit later about instantaneous measurements of the jet stream using real-time information.</p>
+<p>Since we are solving an overconstrained system, we can use the map to compute the average jet stream velocity for each flight path and compare it to the average velocity we extracted directly from the flight data.  This is a measure of the internal consistency of the data.</p>
+<p>Here is the difference in velocities for each flight path:</p>
+<div>
+<br><div style="text-align: center;"><img src="../../images/speeds_diff.png" alt="model/data speed differences per path" width="500"></div>
+<br>
+</div>
+
+<p>Here we're looking at a symmetric difference (so that we include the path from A to B and B to A).
+The differences are peaked at zero, and the spread is about +/- 15 mph.  This can be a significant fraction of the data, but given that this is a signed measurement (i.e. the speed has direction, whether is is along the path or against it), we should be pretty happy with this level of agreement!  It is built from millions of flights averaged over thousands of routes, boiled down to 26 velocity measurements (52 numbers!).  Here's another way to look at the data: the raw average wind speed for each path.</p>
+<div>
+<br><div style="text-align: center;"><img src="../../images/speeds_comp.png" alt="model/data speed comparison" width="500"></div>
+<br>
+</div>
+
+<p>The green is the input data to our model, and the blue are the wind speed for each path that we determine using the model.  The model data have a tighter grouping than the measured data around 20-25 mph, but it is reasonable that the model cannot capture the largest speeds accurately.  In fact, we can see that the model does better for longer flights which traverse many boxes:</p>
+<div>
+<br><div style="text-align: center;"><img src="../../images/speeds_diff_vs_nboxes.png" alt="model/data speed comparison" width="500"></div>
+<br>
+</div>
+
+<p>This indicates that short flights have the largest discrepancy between measured speeds and the model.  That is fine, since we should expect the averaging of the model to better match the longer flights.</p>
+<h2><span style="color:blue">Improved Models</span></h2>
+<p>Let's recap.  We have constructed a simple model to measure the average wind speed based on the flight speeds for a large data set of 32 million flights over 2300 routes, to measure wind speeds over 26 spatial boxes covering the US.  This is a nice example of tidying a data set: 32 million flights reduced to 2300 speeds, reduced via the model to 26 numbers that give a nice picture of the wind speeds over the US.</p>
+<p>So let's consider some questions we should always ask: how can we do better, and what else can we do?</p>
+<p>In the same vein of using flight data to map out wind speeds, there are lots of variations we could pursue:</p>
+<ul>
+<li>
+<p>Global flight data would be very interesting, partly because of the geometry challenges of having good coverage in some regions.  There are lots of flights, but also lots of the parts of the world that planes just don't fly very often (the southern oceans, anyone?).  Having more data with flights outside the US would help with coverage at the geographic boundaries, which is hard to capture with continental flights.</p>
+</li>
+<li>
+<p>On the other end of the spectrum, we could focus on a narrower geographic region with heavy flight traffic.  We could do a more robust model validation, look at more fine-grained spatial features, identify outlier flights, and introduce corrections to the model.  This is something we can do with our current data, since it just takes a narrower focus.</p>
+</li>
+<li>
+<p>Slicing the data in time buckets would let us build an time-evolving model, and should capture seasonal or transient effects like storms.  The eastern US or continental Europe would be great targets for something like this.</p>
+</li>
+</ul>
+<p>We can also ask what other forms of data are available.  The data set we've used here is nice because it allowed us to exploit large statistical samples to create the model; more instantaneous forms of the data may simply provide direct measurements of the wind speed on a flight-by-flight basis.  For example,</p>
+<ul>
+<li>Live (or nearly live) data is available for most flights that include velocity and flight path information.  If we know the cruising speed of the particular plane for a given flight, we can easily determine the wind speed along the flight path for each flight.  Given that for most flights there are other planes in the air nearby at any given time (just based on the sheer volume of flights), there can be enough coverage to map out the (basically instantaneous) two dimensional velocity map.</li>
+</ul>
+<p>The FlightAware and FlightStats API both seem easily capable of producing this information, although they are pay services (after free evaluation periods).  A real-time map of this information is a really exciting possibility!</p>
+</div>
+    </div>
+    <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
+<li><a class="tag p-category" href="../../categories/data-science/" rel="tag">data science</a></li>
+            <li><a class="tag p-category" href="../../categories/flights/" rel="tag">flights</a></li>
+            <li><a class="tag p-category" href="../../categories/ipynb/" rel="tag">ipynb</a></li>
+            <li><a class="tag p-category" href="../../categories/linear-algebra/" rel="tag">linear algebra</a></li>
+            <li><a class="tag p-category" href="../../categories/python/" rel="tag">python</a></li>
+            <li><a class="tag p-category" href="../../categories/sql/" rel="tag">SQL</a></li>
+        </ul>
+<ul class="pager hidden-print">
+<li class="previous">
+                <a href="../symmetry-factors-of-graphs/" rel="prev" title="Symmetry Factors of Graphs">Previous post</a>
+            </li>
+        </ul></nav></aside><section class="comments"><h2>Comments</h2>
+                        <div id="disqus_thread"></div>
+        <script>
+        var disqus_shortname ="mathanddata",
+            disqus_url="http://jrwalsh1.github.io/posts/measuring-wind-speeds-from-flights/",
+        disqus_title="Measuring Wind Speeds from Flights",
+        disqus_identifier="cache/posts/measuring-wind-speeds-from-flights.html",
+        disqus_config = function () {
+            this.language = "en";
+        };
+        (function() {
+            var dsq = document.createElement('script'); dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script><noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a>
+</noscript>
+    <a href="//disqus.com" class="dsq-brlink" rel="nofollow">Comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+        </section></article><script>var disqus_shortname="mathanddata";(function(){var a=document.createElement("script");a.async=true;a.src="//"+disqus_shortname+".disqus.com/count.js";(document.getElementsByTagName("head")[0]||document.getElementsByTagName("body")[0]).appendChild(a)}());</script>
+</div>
+                <!--End of body content-->
+            </div>
+        </div> <!-- ./col -->
+    </div> <!-- ./row -->
+</div> <!-- ./container -->
+
+<footer class="footer"><div class="container">
+        <p class="text-muted">
+            Contents © 2015         <a href="mailto:jrwalsh1@gmail.com">Jon Walsh</a> - Powered by         <a href="https://getnikola.com" rel="nofollow">Nikola</a>         <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"></a><br>This work by <a xmlns:cc="http://creativecommons.org/ns#" href="http://jrwalsh1.github.io" property="cc:attributionName" rel="cc:attributionURL">Jon Walsh</a> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+            
+        </p>
+    </div>
+</footer><script src="../../assets/js/all-nocdn.js"></script><script>$('a.image-reference:not(.islink) img:not(.islink)').parent().colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script><!-- fancy dates --><script>
+    moment.locale("");
+    fancydates(0, "YYYY-MM-DD HH:mm");
+    </script><!-- end fancy dates -->
+</body>
+</html>
