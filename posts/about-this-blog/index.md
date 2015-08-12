@@ -13,4 +13,6 @@ This blog is a place for me to collect some of the explorations into different t
 
 When I'm working on a project I'll often run across a mathematical technique that I want to understand better. A great time for learning something new! Or sometimes I'll use this blog to describe a project, or some key part, that I'm working on. 
 
-If you've found your way here for sometime specific, or just to poke around, I hope you find it useful!
+If you've found your way here for something specific, or just to poke around, I hope you find it useful!
+
+
