@@ -149,9 +149,213 @@ Another assumption we've made, given what is in the data set, is that each fligh
 
 Now let's look at the data and do the measurement!
 
-### <span style="color:blue">.csv to MySQL</span>
+### <span style="color:blue">Setting Up a Database</span>
 
+The data is fairly easy to work with, but it's useful to look at the analysis pipeline.  The data come in `.csv` format divided by year; here's the first few lines for 2008:
 
+<br>
+```
+Year,Month,DayofMonth,DayOfWeek,DepTime,CRSDepTime,ArrTime,CRSArrTime,UniqueCarrier,FlightNum,TailNum,ActualElapsedTime,CRSElapsedTime,AirTime,ArrDelay,DepDelay,Origin,Dest,Distance,TaxiIn,TaxiOut,Cancelled,CancellationCode,Diverted,CarrierDelay,WeatherDelay,NASDelay,SecurityDelay,LateAircraftDelay
+2008,1,3,4,2003,1955,2211,2225,WN,335,N712SW,128,150,116,-14,8,IAD,TPA,810,4,8,0,,0,NA,NA,NA,NA,NA
+2008,1,3,4,754,735,1002,1000,WN,3231,N772SW,128,145,113,2,19,IAD,TPA,810,5,10,0,,0,NA,NA,NA,NA,NA
+2008,1,3,4,628,620,804,750,WN,448,N428WN,96,90,76,14,8,IND,BWI,515,3,17,0,,0,NA,NA,NA,NA,NA
+2008,1,3,4,926,930,1054,1100,WN,1746,N612SW,88,90,78,-6,-4,IND,BWI,515,3,7,0,,0,NA,NA,NA,NA,NA
+```
+<br>
+
+Similar files exist for holding data for airports, carriers, and planes.  The database is that complete -- you can see the routes that a given plane (tagged by its tail number) flies!
+
+Let's set up a `MySQL` database for this data.  First we create the database and start using it:
+
+<br>
+```mysql
+CREATE DATABASE flight_data;
+USE flight_data;
+```
+<br>
+
+Then we create tables for each of our 4 categories.  For the flight data, which is the most complex by far, the syntax is
+
+<br>
+```mysql
+CREATE TABLE flights (Year INT, Month INT, DayofMonth INT, DayofWeek INT, DepTime INT, CRSDepTime INT, ArrTime INT, CRSArrTime INT, UniqueCarrier VARCHAR(5), FlightNum INT, TailNum VARCHAR(8), ActualElapsedTime INT, CRSElapsedTime INT, AirTime INT, ArrDelay INT, DepDelay INT, Origin VARCHAR(3), Dest VARCHAR(3), Distance INT, TaxiIn INT, TaxiOut INT, Cancelled INT, CancellationCode VARCHAR(1), Diverted VARCHAR(1), CarrierDelay INT, WeatherDelay INT, NASDelay INT, SecurityDelay INT, LateAircraftDelay INT);
+```
+<br>
+
+And to fill it we can load directly from the `.csv` files (after removing the header).  For the 2008 year,
+
+<br>
+```mysql
+LOAD DATA LOCAL INFILE "/Users/.../2008.csv" INTO TABLE flights FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
+```
+<br>
+
+It's that easy!  The same process works for the remaining flight data, as well as the other categories.
+
+### <span style="color:blue">Working with the data</span>
+
+This kind of project is great for `python`, especially with `ipython notebook` and `matplotlib` to allow easy exploration of the data.  Since the model involves some linear algebra, `numpy` is a necessity (`pandas` would also be useful, although I didn't use it here).
+
+To read in the data, I use the `pymysql` module to interact with `MySQL`.  A simple function can call the `flight_data` database with an input query:
+
+<br>
+```python
+## function to query the database
+def sqlExec(query):
+    """Given file name, reads input file and stores data"""
+    db = pymysql.connect(user="root", host="localhost", passwd="", db="flight_data", cursorclass=pymysql.cursors.DictCursor)
+    with db:
+        cur = db.cursor()
+        cur.execute(query)
+        tables = cur.fetchall()
+        return tables
+```
+<br>
+
+In our case, we want to pull down flights that are not cancelled or diverted.  Looking through the data, JetBlue flights appear to frequently have problems with the flight time not accounting for the change in time zone, which leads to an incorrect speed measurement.  So, we don't take JetBlue flights.  If we lost a lot of data because of this we could try to fix the flight records, but the data set is more than enough when we play it safe and drop JetBlue's records.
+
+<br>
+```python
+## pull flights from the database
+## Jet Blue flights (UniqueCarrier = 'B6') often have the wrong time zone for the origin or destination, so we drop this data
+flights = sqlExec("SELECT Origin,Dest,Distance,AirTime FROM flights WHERE Origin IN "+sqlsetairports+" AND Dest IN "+sqlsetairports+" AND Cancelled = 0 AND Diverted = 0 AND UniqueCarrier != \"B6\"")
+print "Total of "+str(len(flights))+" flights"
+```
+<br>
+
+`sqlsetairports` is a long list of the 203 airports we are using, pulled from the airports database.  Running this query on our database returns just over 32 million flight records.
+
+From here, we need to measure the speed of each flight between each pair of cities, then average for each flight route.  First we create a dictionary, `speeds`, whose key will be a pair of cities (a string representing the pair), and whose value is a list of speeds for all flights in that route:
+
+<br>
+```python
+for flight in flights:
+    A = flight["Origin"]
+    B = flight["Dest"]
+    dist = flight["Distance"] # distance is in miles
+    time = flight["AirTime"]/60 # convert time to hours
+    # check the time is nonzero
+    if time > 0:
+        speed = dist / time
+        speeds[airportpair_key(A,B)].append(speed)
+```
+<br>
+
+We've define a simple function here to take in strings for each airport (e.g., "SFO") and output a combined string to represent the pair; just a little syntatic sugar.  Next we average:
+
+<br>
+```python
+## calculate the mean windspeed between airport pairs
+vbarspeeds = []
+for i in range(len(airports)):
+    for j in range(i+1,len(airports)):
+        A = airports[i]
+        B = airports[j]
+        # only allow city pairs with more than 100 flights each way
+        if len(speeds[airportpair_key(A,B)]) > 100 and len(speeds[airportpair_key(B,A)]) > 100:
+            AtoBspeed = np.mean(speeds[airportpair_key(A,B)])
+            BtoAspeed = np.mean(speeds[airportpair_key(B,A)])
+            vbar = 0.5 * (AtoBspeed - BtoAspeed)
+            # keep things symmetrized: we include the A -> B and B -> A paths
+            # this does not affect the least squares but does make comparisons easier
+            vbarspeeds.append([A, B, vbar])
+            vbarspeeds.append([B, A, -vbar])
+```
+<br>
+
+This gives us the average wind speed $\bar{v}^{(p)}$ for each flight path.  The technically challenging part of the model is to take each flight path and construct the relevant entries in $\mathbf{M}$, which contain the oriented path of the flight in each box.  We can accomplish this using a nice parameterization of a great circle in terms of latitude and longitude (which are the coordinates we draw our boxes in):
+
+<br>
+```python
+## parametric function for a great circle between two longitude, latitude points
+def greatCircleFunc(coords1, coords2, t):
+    """Gives parametric formula for the great circle between two latitude, longitude points. Returns [latitude, longitude] in degrees."""
+    [long1, lat1] = coords1
+    [long2, lat2] = coords2
+    ## convert latitudes to polar angles (radians)
+    theta1 = 0.5 * np.pi - (np.pi / 180.) * lat1
+    theta2 = 0.5 * np.pi - (np.pi / 180.) * lat2
+    ## convert longitudes radians
+    phi1 = (np.pi / 180.) * long1
+    phi2 = (np.pi / 180.) * long2
+    ## create unit vectors to each point
+    unitvec1 = np.array([ np.sin(theta1) * np.cos(phi1), np.sin(theta1) * np.sin(phi1), np.cos(theta1) ])
+    unitvec2 = np.array([ np.sin(theta2) * np.cos(phi2), np.sin(theta2) * np.sin(phi2), np.cos(theta2) ])
+    ## angle between the two points
+    tau = np.arccos( np.dot(unitvec1, unitvec2) )
+    ## parametric terms
+    A = np.sin((1 - t)*tau) / np.sin(tau)
+    B = np.sin(t*tau) / np.sin(tau)
+    ## compute latitude, longitude
+    xt = A * np.sin(theta1) * np.cos(phi1) + B * np.sin(theta2) * np.cos(phi2)
+    yt = A * np.sin(theta1) * np.sin(phi1) + B * np.sin(theta2) * np.sin(phi2)
+    zt = A * np.cos(theta1) + B * np.cos(theta2)
+    longt = (180. / np.pi) * np.arctan2(yt, xt)
+    latt = (180. / np.pi) * np.arctan2(zt, np.sqrt(xt*xt + yt*yt))
+
+    return [longt, latt]
+
+ ## compute box fractions and path directions in latitude-longitude space
+ def boxfractions(coords1, coords2, boxes):
+     """Computes the fraction of total distance of a geodesic path in a given latitude-longitude box.  Returns the distance fractions in the path for each box."""
+     [long1, lat1] = coords1
+     [long2, lat2] = coords2
+     ## counter for each box
+     boxpts = [0 for n in range(len(boxes))]
+     ## loop over steps in t, use parametric function of geodesic path
+     nsteps = 99
+     for nstep in range(nsteps+1):
+         ## get t value and latitude, longitude
+         tval = nstep * 1. / nsteps
+         [longt, latt] = greatCircleFunc(coords1, coords2, tval)
+         ## loop over boxes
+         for nbox in range(len(boxes)):
+             ## check if our point is in the box
+             if boxes[nbox][0][0] < longt < boxes[nbox][0][1] and boxes[nbox][1][0] < latt < boxes[nbox][1][1]:
+                 boxpts[nbox] += 1./(nsteps+1)
+     return boxpts
+```
+<br>
+
+The second function will compute the fraction of the great circle path between two coordinates in a given set of latitude-longitude boxes.  To construct $\mathbf{M}$, we apply this function to each path:
+
+<br>
+```python
+## construct M
+## for each path, we record the longitude then latitude components
+rows = []
+for path in vbarspeeds:
+    [long1, lat1] = airportcoords[path[0]]
+    [long2, lat2] = airportcoords[path[1]]
+    boxfracs = boxfractions(airportcoords[path[0]], airportcoords[path[1]], boxes)
+    ## here we approximate the direction of travel in each box as a straight line in latitude-longitude space
+    ## this is a reasonable approximation for the direction
+    rhatlat = (lat2 - lat1) / np.sqrt((lat2 - lat1)*(lat2 - lat1) + (long2 - long1)*(long2 - long1))
+    rhatlong = (long2 - long1) / np.sqrt((lat2 - lat1)*(lat2 - lat1) + (long2 - long1)*(long2 - long1))
+    row = []
+    for frac in boxfracs:
+        row.append(rhatlong * frac)
+        row.append(rhatlat * frac)
+    rows.append(row)
+M = np.matrix(rows)
+```
+<br>
+
+Note that we're assuming the great circle path is straight, along the mean great circle path, in each box.  Since the total area of the US is small enough so that the flight paths are fairly straight, this is a reasonable approximation.
+
+Finally, we've just got to do the basic linear algebra to get the wind velocities.
+
+<br>
+```python
+## now find vJ
+Mlsm = np.array(np.dot(np.linalg.inv(np.dot(np.transpose(M), M)),np.transpose(M)))
+vJ = np.dot(Mlsm, vbar)
+```
+<br>
+
+And now we can start plotting!  To make the figures with the maps, I wanted to use an equirectangular projection (Cartesian in latitude and longitude) since it makes drawing the flight paths easy, so I found a simple US map and layed down coordinates on it.  This is not a common projection you'll see because it has navigational drawbacks (it's not conformal or equal area), but it's useful here.  
+
+I've only given snippets of the analysis code here; if you want to see more, you can checkout my [github repo](https://github.com/jrwalsh1/FlightData "FlightData") for this project.  Let's look at some plots.
 
 # <span style="color:blue">Measuring the Jet Stream</span>
 
