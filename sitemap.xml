@@ -19,11 +19,19 @@
  </url>
  <url>
   <loc>http://jrwalsh1.github.io/archive.html</loc>
-  <lastmod>2015-08-12T18:19:00Z</lastmod>
+  <lastmod>2015-08-13T21:27:00Z</lastmod>
  </url>
  <url>
   <loc>http://jrwalsh1.github.io/categories/</loc>
-  <lastmod>2015-08-12T17:38:00Z</lastmod>
+  <lastmod>2015-08-13T21:27:00Z</lastmod>
+ </url>
+ <url>
+  <loc>http://jrwalsh1.github.io/categories/c++/</loc>
+  <lastmod>2015-08-13T21:27:00Z</lastmod>
+ </url>
+ <url>
+  <loc>http://jrwalsh1.github.io/categories/chess/</loc>
+  <lastmod>2015-08-12T22:40:00Z</lastmod>
  </url>
  <url>
   <loc>http://jrwalsh1.github.io/categories/combinatorics/</loc>
@@ -62,8 +70,16 @@
   <lastmod>2015-08-11T21:40:00Z</lastmod>
  </url>
  <url>
+  <loc>http://jrwalsh1.github.io/categories/permutations/</loc>
+  <lastmod>2015-08-12T22:40:00Z</lastmod>
+ </url>
+ <url>
   <loc>http://jrwalsh1.github.io/categories/python/</loc>
   <lastmod>2015-08-12T17:38:00Z</lastmod>
+ </url>
+ <url>
+  <loc>http://jrwalsh1.github.io/categories/recursion/</loc>
+  <lastmod>2015-08-12T22:40:00Z</lastmod>
  </url>
  <url>
   <loc>http://jrwalsh1.github.io/categories/sql/</loc>
@@ -88,6 +104,10 @@
  <url>
   <loc>http://jrwalsh1.github.io/posts/measuring-wind-speeds-from-flights/</loc>
   <lastmod>2015-08-12T17:38:00Z</lastmod>
+ </url>
+ <url>
+  <loc>http://jrwalsh1.github.io/posts/permutations-and-the-n-queens-problem/</loc>
+  <lastmod>2015-08-12T22:40:00Z</lastmod>
  </url>
  <url>
   <loc>http://jrwalsh1.github.io/posts/symmetry-factors-of-graphs/</loc>

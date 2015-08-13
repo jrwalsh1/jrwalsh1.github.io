@@ -67,7 +67,56 @@ MathJax.Hub.Config({
                 <div class="row">
                     
 <div class="postindex">
-    <article class="h-entry post-text"><header><h1 class="p-name entry-title"><a href="posts/measuring-wind-speeds-from-flights/" class="u-url">Measuring Wind Speeds from Flights</a></h1>
+    <article class="h-entry post-text"><header><h1 class="p-name entry-title"><a href="posts/permutations-and-the-n-queens-problem/" class="u-url">Permutations and the N Queens Problem</a></h1>
+        <div class="metadata">
+            <p class="byline author vcard"><span class="byline-name fn">Jon Walsh</span></p>
+            <p class="dateline"><a href="posts/permutations-and-the-n-queens-problem/" rel="bookmark"><time class="published dt-published" datetime="2015-08-12T15:29:14-07:00" itemprop="datePublished" title="Publication date">2015-08-12 15:29</time></a></p>
+                <p class="commentline">            <a href="posts/permutations-and-the-n-queens-problem/#disqus_thread" data-disqus-identifier="cache/posts/permutations-and-the-n-queens-problem.html">Comments</a>
+
+
+        </p>
+</div>
+    </header><div class="p-summary entry-summary">
+    <div>
+<p>I ran across an interesting problem recently while studying some recursive algorithms: the N Queens Problem.  Given an $N$-by-$N$ chessboard, the problem is to determine the number of configurations of $N$ queens on the chessboard that do not attack each other.  That is, for a valid configuration (solution) no two queens share the same row (rank), column (file), or diagonal.</p>
+<p>For $N = 1$ there is a trivial solution, but none exist for $N = 2$ or $3$.  $N = 4$ has two solutions:</p>
+<div> $$
+\begin{matrix}
+- &amp; Q &amp; - &amp; - \\\
+- &amp; - &amp; - &amp; Q \\\
+Q &amp; - &amp; - &amp; - \\\
+- &amp; - &amp; Q &amp; -
+\end{matrix}
+\qquad \text{ and } \qquad
+\begin{matrix}
+- &amp; - &amp; Q &amp; - \\\
+Q &amp; - &amp; - &amp; - \\\
+- &amp; - &amp; - &amp; Q \\\
+- &amp; Q &amp; - &amp; -
+\end{matrix}
+$$ </div>
+
+<p><br></p>
+<p>And they grow quickly from there.  For $N = 8$ there are $92$ solutions (many related by symmetry) -- here's one:</p>
+<div> $$
+\begin{matrix}
+- &amp; - &amp; Q &amp; - &amp; - &amp; - &amp; - &amp; - \\\
+- &amp; - &amp; - &amp; - &amp; - &amp; Q &amp; - &amp; - \\\
+- &amp; - &amp; - &amp; - &amp; - &amp; - &amp; - &amp; Q \\\
+Q &amp; - &amp; - &amp; - &amp; - &amp; - &amp; - &amp; - \\\
+- &amp; - &amp; - &amp; Q &amp; - &amp; - &amp; - &amp; - \\\
+- &amp; - &amp; - &amp; - &amp; - &amp; - &amp; Q &amp; - \\\
+- &amp; - &amp; - &amp; - &amp; Q &amp; - &amp; - &amp; - \\\
+- &amp; Q &amp; - &amp; - &amp; - &amp; - &amp; - &amp; -
+\end{matrix}
+$$ </div>
+
+<p><br></p>
+<p>and for $N = 15$ there are $2279184$ solutions.  It appears the number of solutions has not been computed for more than $N = 26$, where there are more than $22$ quadrillion solutions!  No general formula for the number solutions is known, nor is the asymptotic behavior.</p>
+<p class="more"><a href="posts/permutations-and-the-n-queens-problem/">Read more…</a></p>
+</div>
+    </div>
+    </article><article class="h-entry post-text"><header><h1 class="p-name entry-title"><a href="posts/measuring-wind-speeds-from-flights/" class="u-url">Measuring Wind Speeds from Flights</a></h1>
         <div class="metadata">
             <p class="byline author vcard"><span class="byline-name fn">Jon Walsh</span></p>
             <p class="dateline"><a href="posts/measuring-wind-speeds-from-flights/" rel="bookmark"><time class="published dt-published" datetime="2015-08-12T01:14:53-07:00" itemprop="datePublished" title="Publication date">2015-08-12 01:14</time></a></p>

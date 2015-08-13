@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Math and Data (permutations)</title><link>http://jrwalsh1.github.io/</link><description></description><atom:link href="http://jrwalsh1.github.io/categories/permutations.xml" type="application/rss+xml" rel="self"></atom:link><language>en</language><lastBuildDate>Thu, 13 Aug 2015 23:06:23 GMT</lastBuildDate><generator>https://getnikola.com/</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Permutations and the N Queens Problem</title><link>http://jrwalsh1.github.io/posts/permutations-and-the-n-queens-problem/</link><dc:creator>Jon Walsh</dc:creator><description>&lt;div&gt;&lt;p&gt;I ran across an interesting problem recently while studying some recursive algorithms: the N Queens Problem.  Given an $N$-by-$N$ chessboard, the problem is to determine the number of configurations of $N$ queens on the chessboard that do not attack each other.  That is, for a valid configuration (solution) no two queens share the same row (rank), column (file), or diagonal.&lt;/p&gt;
+&lt;p&gt;For $N = 1$ there is a trivial solution, but none exist for $N = 2$ or $3$.  $N = 4$ has two solutions:&lt;/p&gt;
+&lt;div&gt; $$
+\begin{matrix}
+- &amp;amp; Q &amp;amp; - &amp;amp; - \\\
+- &amp;amp; - &amp;amp; - &amp;amp; Q \\\
+Q &amp;amp; - &amp;amp; - &amp;amp; - \\\
+- &amp;amp; - &amp;amp; Q &amp;amp; -
+\end{matrix}
+\qquad \text{ and } \qquad
+\begin{matrix}
+- &amp;amp; - &amp;amp; Q &amp;amp; - \\\
+Q &amp;amp; - &amp;amp; - &amp;amp; - \\\
+- &amp;amp; - &amp;amp; - &amp;amp; Q \\\
+- &amp;amp; Q &amp;amp; - &amp;amp; -
+\end{matrix}
+$$ &lt;/div&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;p&gt;And they grow quickly from there.  For $N = 8$ there are $92$ solutions (many related by symmetry) -- here's one:&lt;/p&gt;
+&lt;div&gt; $$
+\begin{matrix}
+- &amp;amp; - &amp;amp; Q &amp;amp; - &amp;amp; - &amp;amp; - &amp;amp; - &amp;amp; - \\\
+- &amp;amp; - &amp;amp; - &amp;amp; - &amp;amp; - &amp;amp; Q &amp;amp; - &amp;amp; - \\\
+- &amp;amp; - &amp;amp; - &amp;amp; - &amp;amp; - &amp;amp; - &amp;amp; - &amp;amp; Q \\\
+Q &amp;amp; - &amp;amp; - &amp;amp; - &amp;amp; - &amp;amp; - &amp;amp; - &amp;amp; - \\\
+- &amp;amp; - &amp;amp; - &amp;amp; Q &amp;amp; - &amp;amp; - &amp;amp; - &amp;amp; - \\\
+- &amp;amp; - &amp;amp; - &amp;amp; - &amp;amp; - &amp;amp; - &amp;amp; Q &amp;amp; - \\\
+- &amp;amp; - &amp;amp; - &amp;amp; - &amp;amp; Q &amp;amp; - &amp;amp; - &amp;amp; - \\\
+- &amp;amp; Q &amp;amp; - &amp;amp; - &amp;amp; - &amp;amp; - &amp;amp; - &amp;amp; -
+\end{matrix}
+$$ &lt;/div&gt;
+
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;p&gt;and for $N = 15$ there are $2279184$ solutions.  It appears the number of solutions has not been computed for more than $N = 26$, where there are more than $22$ quadrillion solutions!  No general formula for the number solutions is known, nor is the asymptotic behavior.&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://jrwalsh1.github.io/posts/permutations-and-the-n-queens-problem/"&gt;Read more…&lt;/a&gt; (14 min remaining to read)&lt;/p&gt;&lt;/div&gt;</description><category>c++</category><category>chess</category><category>combinatorics</category><category>mathjax</category><category>permutations</category><category>python</category><category>recursion</category><guid>http://jrwalsh1.github.io/posts/permutations-and-the-n-queens-problem/</guid><pubDate>Wed, 12 Aug 2015 22:29:14 GMT</pubDate></item></channel></rss>
