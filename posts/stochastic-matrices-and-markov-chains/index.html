@@ -95,7 +95,7 @@ MathJax.Hub.Config({
 <p>My own work has dealt a lot with Monte Carlo sampling: either for multi-dimensional integrals or for simulating processes.  Typically the systems I work on are dynamic, continuous systems rather than finite state systems.  The evolution operator in continuous systems is often cast as a probability distribution: one generates an event time by sampling according to some probability distribution -- a good example is radioactive decay, where the distribution is simply Poisson.  At the heart most Monte Carlo simulation problems I work on are Poission processes, which have lots of interesting analytic properties that may be derived by using unitarity.</p>
 <p>There is a good analog with finite state systems in Markov processes.  In this case, the state of the system can be represented probabilistically by a vector:</p>
 <p>$$
-\vec{s} = \left( \begin{matrix} p_1 \ p_2 \ \vdots \ p_n \end{matrix} \right) \,, \quad \sum_i p_i = 1\,.
+\vec{s} = \left( \begin{matrix} p_1 \\ p_2 \\ \vdots \\ p_n \end{matrix} \right) \,, \quad \sum_i p_i = 1\,.
 $$</p>
 <p>Unitarity enforces the condition that the sum of the elements is 1.  We will label fixed states $i$ as $\vec{s}<em j="j">i$, with $(\vec{s}_i)</em> = \delta_{ij}.$  One step in the chain is a transition between states with a specific probability:</p>
 <ul>

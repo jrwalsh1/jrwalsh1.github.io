@@ -14,7 +14,7 @@ My own work has dealt a lot with Monte Carlo sampling: either for multi-dimensio
 There is a good analog with finite state systems in Markov processes.  In this case, the state of the system can be represented probabilistically by a vector:
 
 $$
-\vec{s} = \left( \begin{matrix} p_1 \\ p_2 \\ \vdots \\ p_n \end{matrix} \right) \,, \quad \sum_i p_i = 1\,.
+\vec{s} = \left( \begin{matrix} p_1 \\\ p_2 \\\ \vdots \\\ p_n \end{matrix} \right) \,, \quad \sum_i p_i = 1\,.
 $$
 
 Unitarity enforces the condition that the sum of the elements is 1.  We will label fixed states $i$ as $\vec{s}_i$, with $(\vec{s}_i)_{j} = \delta_{ij}.$  One step in the chain is a transition between states with a specific probability:
